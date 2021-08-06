@@ -576,7 +576,7 @@ saveStrategy("/home/ron/uppaal/projects/q_learning/output/complete_path.out", op
 			<comment>//</comment>
 		</query>
 		<query>
-			<formula>saveStrategy("/home/ron/uppaal/projects/mcrl_strategy_parser/OutParser/out/complete_path.out", policy)</formula>
+			<formula>saveStrategy("~/Rong/mcrl_models/policy.out", policy)</formula>
 			<comment>//this is also for seperating learning and verification.
 //the NN (nearest neighbor) method must have this query.</comment>
 		</query>
