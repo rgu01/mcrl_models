@@ -1,0 +1,941 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.5//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_5.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+// Place global declarations here.
+const int AgentNum = 3;
+typedef int[0,AgentNum-1] AgentScale;
+const int TaskNum = 4;
+const int EventNum = 0;
+const int MilestoneNum = 4;
+const int MaxIteration = 1;
+const int RegularTaskNum[AgentNum] = {3,3,3};
+//const int MAXTIME = 1500;
+
+int[0,MilestoneNum] positions[AgentNum] = {0,0,0};
+bool tf[AgentNum][TaskNum]={{true,false,false,false},{true,false,false,false},{true,false,false,false}};
+bool ts[AgentNum][TaskNum]={{true,false,false,false},{true,false,false,false},{true,false,false,false}};
+int iteration[AgentNum] = {0,0,0};
+bool idle[AgentNum] = {true,true,true};
+
+clock globalTime;
+
+broadcast chan someoneDone[MilestoneNum];
+
+//AUTO BEGIN
+const int ACTNUM = 39;
+const int DVNUM = 15;
+const int CVNUM = 1;
+const int LOCNUM = 12;
+const int MOVEMENT = 0;
+const int TASKEXE = 1;
+const int MOVEMENT0_P0 = 0;
+const int MOVEMENT0_F0T1 = 1;
+const int MOVEMENT0_F0T2 = 2;
+const int MOVEMENT0_F0T3 = 3;
+const int MOVEMENT0_P1 = 4;
+const int MOVEMENT0_F1T2 = 5;
+const int MOVEMENT0_F1T3 = 6;
+const int MOVEMENT0_P2 = 7;
+const int MOVEMENT0_F2T1 = 8;
+const int MOVEMENT0_F2T3 = 9;
+const int MOVEMENT0_P3 = 10;
+const int MOVEMENT0_F3T1 = 11;
+const int MOVEMENT0_F3T2 = 12;
+const int MOVEMENT1_P0 = 0;
+const int MOVEMENT1_F0T1 = 1;
+const int MOVEMENT1_F0T2 = 2;
+const int MOVEMENT1_F0T3 = 3;
+const int MOVEMENT1_P1 = 4;
+const int MOVEMENT1_F1T2 = 5;
+const int MOVEMENT1_F1T3 = 6;
+const int MOVEMENT1_P2 = 7;
+const int MOVEMENT1_F2T1 = 8;
+const int MOVEMENT1_F2T3 = 9;
+const int MOVEMENT1_P3 = 10;
+const int MOVEMENT1_F3T1 = 11;
+const int MOVEMENT1_F3T2 = 12;
+const int MOVEMENT2_P0 = 0;
+const int MOVEMENT2_F0T1 = 1;
+const int MOVEMENT2_F0T2 = 2;
+const int MOVEMENT2_F0T3 = 3;
+const int MOVEMENT2_P1 = 4;
+const int MOVEMENT2_F1T2 = 5;
+const int MOVEMENT2_F1T3 = 6;
+const int MOVEMENT2_P2 = 7;
+const int MOVEMENT2_F2T1 = 8;
+const int MOVEMENT2_F2T3 = 9;
+const int MOVEMENT2_P3 = 10;
+const int MOVEMENT2_F3T1 = 11;
+const int MOVEMENT2_F3T2 = 12;
+
+const int TASKEXE0_WAITING = 0;
+const int TASKEXE0_T0 = 1;
+const int TASKEXE0_T1 = 2;
+const int TASKEXE0_T2 = 3;
+const int TASKEXE0_T3 = 4;
+const int TASKEXE1_WAITING = 0;
+const int TASKEXE1_T0 = 1;
+const int TASKEXE1_T1 = 2;
+const int TASKEXE1_T2 = 3;
+const int TASKEXE1_T3 = 4;
+const int TASKEXE2_WAITING = 0;
+const int TASKEXE2_T0 = 1;
+const int TASKEXE2_T1 = 2;
+const int TASKEXE2_T2 = 3;
+const int TASKEXE2_T3 = 4;
+
+typedef struct
+{
+    int[-1,AgentNum-1] agent_id;
+    int[-1,1] action_type; // MOVEMENT or TASKEXE
+    int[-1, LOCNUM] original_location_id;
+    int[-1, LOCNUM] target_location_id;
+}ST_Q_Action;
+const ST_Q_Action map_actions[ACTNUM]={{0, 0, MOVEMENT0_P0, MOVEMENT0_F0T1 },
+{0, 0, MOVEMENT0_P0, MOVEMENT0_F0T2 },
+{0, 0, MOVEMENT0_P0, MOVEMENT0_F0T3 },
+{0, 0, MOVEMENT0_P1, MOVEMENT0_F1T2 },
+{0, 0, MOVEMENT0_P1, MOVEMENT0_F1T3 },
+{0, 0, MOVEMENT0_P2, MOVEMENT0_F2T1 },
+{0, 0, MOVEMENT0_P2, MOVEMENT0_F2T3 },
+{0, 0, MOVEMENT0_P3, MOVEMENT0_F3T1 },
+{0, 0, MOVEMENT0_P3, MOVEMENT0_F3T2 },
+{0, 1, TASKEXE0_T0, TASKEXE0_WAITING },
+{0, 1, TASKEXE0_T0, TASKEXE0_T1 },
+{0, 1, TASKEXE0_T0, TASKEXE0_T2 },
+{0, 1, TASKEXE0_T0, TASKEXE0_T3 },
+{1, 0, MOVEMENT1_P0, MOVEMENT1_F0T1 },
+{1, 0, MOVEMENT1_P0, MOVEMENT1_F0T2 },
+{1, 0, MOVEMENT1_P0, MOVEMENT1_F0T3 },
+{1, 0, MOVEMENT1_P1, MOVEMENT1_F1T2 },
+{1, 0, MOVEMENT1_P1, MOVEMENT1_F1T3 },
+{1, 0, MOVEMENT1_P2, MOVEMENT1_F2T1 },
+{1, 0, MOVEMENT1_P2, MOVEMENT1_F2T3 },
+{1, 0, MOVEMENT1_P3, MOVEMENT1_F3T1 },
+{1, 0, MOVEMENT1_P3, MOVEMENT1_F3T2 },
+{1, 1, TASKEXE1_T0, TASKEXE1_WAITING },
+{1, 1, TASKEXE1_T0, TASKEXE1_T1 },
+{1, 1, TASKEXE1_T0, TASKEXE1_T2 },
+{1, 1, TASKEXE1_T0, TASKEXE1_T3 },
+{2, 0, MOVEMENT2_P0, MOVEMENT2_F0T1 },
+{2, 0, MOVEMENT2_P0, MOVEMENT2_F0T2 },
+{2, 0, MOVEMENT2_P0, MOVEMENT2_F0T3 },
+{2, 0, MOVEMENT2_P1, MOVEMENT2_F1T2 },
+{2, 0, MOVEMENT2_P1, MOVEMENT2_F1T3 },
+{2, 0, MOVEMENT2_P2, MOVEMENT2_F2T1 },
+{2, 0, MOVEMENT2_P2, MOVEMENT2_F2T3 },
+{2, 0, MOVEMENT2_P3, MOVEMENT2_F3T1 },
+{2, 0, MOVEMENT2_P3, MOVEMENT2_F3T2 },
+{2, 1, TASKEXE2_T0, TASKEXE2_WAITING },
+{2, 1, TASKEXE2_T0, TASKEXE2_T1 },
+{2, 1, TASKEXE2_T0, TASKEXE2_T2 },
+{2, 1, TASKEXE2_T0, TASKEXE2_T3 }};
+
+chan run, exe, done;
+int[0, LOCNUM] locations[AgentNum][2] = {{MOVEMENT0_P0,TASKEXE0_T0},{MOVEMENT0_P0,TASKEXE0_T0},{MOVEMENT0_P0,TASKEXE0_T0}};
+bool scheduled[AgentNum] = {false,false,false};
+ST_Q_Action next_action = {-1, -1, -1, -1};
+bool no_action = false;
+
+const int[0,TaskNum] rules[MilestoneNum] = {0,1,2,3};
+bool isJobDone(int agentID, int currentPosition, int targetPosition)
+{
+    int currentTask = rules[currentPosition];
+    int targetTask = rules[targetPosition];
+    bool currentFinished = tf[agentID][currentTask];
+    bool targetFinished = tf[agentID][targetTask];
+    bool jobDone = currentFinished || (!targetFinished);
+    
+    return jobDone;
+}
+
+bool isChosen(int agentID, int current, int next)
+{
+    bool allowed = (next_action.agent_id == agentID) &amp;&amp;
+                   (next_action.action_type == MOVEMENT) &amp;&amp;
+                   (next_action.original_location_id == current) &amp;&amp;
+                   (next_action.target_location_id == next);
+    bool ready = idle[agentID] &amp;&amp; iteration[agentID]&lt;MaxIteration;
+
+    return ready &amp;&amp; (no_action || allowed);
+}
+
+import "/home/ron/uppaal/projects/conductor/lib/libconductor.so" {
+//import "/home/ron/uppaal/projects/conductor/lib/libconductor-3agents.so" {
+    initialize = int uppaal_external_initialize();
+    print = void uppaal_external_print_strategy();
+    test = int uppaal_external_test();
+    make_decision = int uppaal_external_make_decision(bool minimization, int&amp; p_iteration[AgentNum], int TaskNum, int&amp; p_tf1[TaskNum], 
+                                      int&amp; p_tf2[TaskNum], int&amp; p_tf3[TaskNum], int&amp; p_locations1[2], int&amp; p_locations2[2], int&amp; p_locations3[2]);
+};
+//AUTO END
+
+
+
+</declaration>
+	<template>
+		<name>Movement0</name>
+		<parameter>const AgentScale id</parameter>
+		<declaration>clock t;
+
+void updatePosition(int target)
+{
+    if(target == MOVEMENT0_P0)
+    {
+        positions[id] = 0;
+    }
+    else if(target == MOVEMENT0_P1)
+    {
+        positions[id] = 1;
+    }
+    else if(target == MOVEMENT0_P2)
+    {
+        positions[id] = 2;
+    }
+    else if(target == MOVEMENT0_P3)
+    {
+        positions[id] = 3;
+    }
+    else
+    {
+        positions[id] = 4;
+    }
+}
+
+void update(int target)
+{
+    t = 0;
+    idle[id] = false;
+    scheduled[id] = true;
+    locations[id][MOVEMENT]=target;
+    updatePosition(target);
+}
+
+void react(int target)
+{
+    t = 0;
+    idle[id] = true;
+    scheduled[id] = false;
+    locations[id][MOVEMENT]=target;
+    updatePosition(target);
+}</declaration>
+		<location id="id0" x="0" y="-263">
+			<name x="-10" y="-293">P0</name>
+		</location>
+		<location id="id1" x="-408" y="-136">
+			<name x="-418" y="-166">F0T1</name>
+			<label kind="invariant" x="-391" y="-128">t&lt;=25</label>
+		</location>
+		<location id="id2" x="0" y="-127">
+			<name x="-10" y="-157">F0T2</name>
+			<label kind="invariant" x="8" y="-119">t&lt;=26</label>
+		</location>
+		<location id="id3" x="408" y="-127">
+			<name x="398" y="-157">F0T3</name>
+			<label kind="invariant" x="398" y="-112">t&lt;=30</label>
+		</location>
+		<location id="id4" x="-408" y="34">
+			<name x="-438" y="42">P1</name>
+		</location>
+		<location id="id5" x="-204" y="204">
+			<name x="-214" y="174">F1T2</name>
+			<label kind="invariant" x="-187" y="204">t&lt;=15</label>
+		</location>
+		<location id="id6" x="0" y="272">
+			<name x="-10" y="242">F1T3</name>
+			<label kind="invariant" x="-8" y="281">t&lt;=18</label>
+		</location>
+		<location id="id7" x="0" y="34">
+			<name x="-10" y="4">P2</name>
+		</location>
+		<location id="id8" x="-204" y="-136">
+			<name x="-214" y="-166">F2T1</name>
+			<label kind="invariant" x="-214" y="-121">t&lt;=15</label>
+		</location>
+		<location id="id9" x="204" y="-136">
+			<name x="194" y="-166">F2T3</name>
+			<label kind="invariant" x="194" y="-121">t&lt;=12</label>
+		</location>
+		<location id="id10" x="408" y="34">
+			<name x="398" y="4">P3</name>
+		</location>
+		<location id="id11" x="0" y="340">
+			<name x="-10" y="310">F3T1</name>
+			<label kind="invariant" x="-10" y="355">t&lt;=18</label>
+		</location>
+		<location id="id12" x="204" y="204">
+			<name x="161" y="212">F3T2</name>
+			<label kind="invariant" x="221" y="204">t&lt;=12</label>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-501" y="-255">isChosen(id,MOVEMENT0_P0,
+MOVEMENT0_F0T1)&amp;&amp;
+isJobDone(id,0,1)</label>
+			<label kind="synchronisation" x="-501" y="-280">run?</label>
+			<label kind="assignment" x="-501" y="-195">update(MOVEMENT0_F0T1)</label>
+			<nail x="-408" y="-263"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id1"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-425" y="-59">t&gt;=25</label>
+			<label kind="synchronisation" x="-425" y="-76">done!</label>
+			<label kind="assignment" x="-476" y="-42">react(MOVEMENT0_P1)</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-110" y="-255">isChosen(id,MOVEMENT0_P0,
+MOVEMENT0_F0T2)&amp;&amp;
+isJobDone(id,0,2)</label>
+			<label kind="synchronisation" x="-110" y="-289">run?</label>
+			<label kind="assignment" x="-110" y="-195">update(MOVEMENT0_F0T2)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id2"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-68" y="-102">t&gt;=26</label>
+			<label kind="synchronisation" x="-34" y="-68">done!</label>
+			<label kind="assignment" x="-93" y="-85">react(MOVEMENT0_P2)</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id3"/>
+			<label kind="guard" x="246" y="-255">isChosen(id,MOVEMENT0_P0,
+MOVEMENT0_F0T3)&amp;&amp;
+isJobDone(id,0,3)</label>
+			<label kind="synchronisation" x="348" y="-280">run?</label>
+			<label kind="assignment" x="246" y="-187">update(MOVEMENT0_F0T3)</label>
+			<nail x="408" y="-263"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id3"/>
+			<target ref="id10"/>
+			<label kind="guard" x="374" y="-59">t&gt;=30</label>
+			<label kind="synchronisation" x="382" y="-76">done!</label>
+			<label kind="assignment" x="374" y="-42">react(MOVEMENT0_P3)</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-357" y="68">isChosen(id,MOVEMENT0_P1,
+MOVEMENT0_F1T2)&amp;&amp;
+isJobDone(id,1,2)</label>
+			<label kind="synchronisation" x="-357" y="51">run?</label>
+			<label kind="assignment" x="-357" y="127">update(MOVEMENT0_F1T2)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-144" y="136">t&gt;=15</label>
+			<label kind="synchronisation" x="-144" y="102">done!</label>
+			<label kind="assignment" x="-144" y="119">react(MOVEMENT0_P2)</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-433" y="187">isChosen(id,MOVEMENT0_P1,
+MOVEMENT0_F1T3)&amp;&amp;
+isJobDone(id,1,3)</label>
+			<label kind="synchronisation" x="-289" y="255">run?</label>
+			<label kind="assignment" x="-246" y="255">update(MOVEMENT0_F1T3)</label>
+			<nail x="-374" y="272"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id6"/>
+			<target ref="id10"/>
+			<label kind="guard" x="93" y="255">t&gt;=18</label>
+			<label kind="synchronisation" x="51" y="255">done!</label>
+			<label kind="assignment" x="161" y="255">react(MOVEMENT0_P3)</label>
+			<nail x="340" y="272"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-229" y="-8">isChosen(id,MOVEMENT0_P2,
+MOVEMENT0_F2T1)&amp;&amp;
+isJobDone(id,2,1)</label>
+			<label kind="synchronisation" x="-85" y="-25">run?</label>
+			<label kind="assignment" x="-238" y="-42">update(MOVEMENT0_F2T1)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id8"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-289" y="-93">t&gt;=15</label>
+			<label kind="synchronisation" x="-272" y="-110">done!</label>
+			<label kind="assignment" x="-357" y="-76">react(MOVEMENT0_P1)</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id9"/>
+			<label kind="guard" x="25" y="-8">isChosen(id,MOVEMENT0_P2,
+MOVEMENT0_F2T3)&amp;&amp;
+isJobDone(id,2,3)</label>
+			<label kind="synchronisation" x="42" y="-25">run?</label>
+			<label kind="assignment" x="25" y="-42">update(MOVEMENT0_F2T3)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="guard" x="272" y="-68">t&gt;=12</label>
+			<label kind="synchronisation" x="289" y="-51">done!</label>
+			<label kind="assignment" x="212" y="-85">react(MOVEMENT0_P3)</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="348" y="280">isChosen(id,MOVEMENT0_P3,
+MOVEMENT0_F3T1)&amp;&amp;
+isJobDone(id,3,1)</label>
+			<label kind="synchronisation" x="297" y="323">run?</label>
+			<label kind="assignment" x="68" y="323">t=0,update(MOVEMENT0_F3T1)</label>
+			<nail x="408" y="340"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id11"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-374" y="323">t&gt;=18</label>
+			<label kind="synchronisation" x="-127" y="323">done!</label>
+			<label kind="assignment" x="-306" y="323">react(MOVEMENT0_P1)</label>
+			<nail x="-408" y="340"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id12"/>
+			<label kind="guard" x="187" y="68">isChosen(id,MOVEMENT0_P3,
+MOVEMENT0_F3T2)&amp;&amp;
+isJobDone(id,3,2)</label>
+			<label kind="synchronisation" x="323" y="34">run?</label>
+			<label kind="assignment" x="187" y="51">update(MOVEMENT0_F3T2)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id12"/>
+			<target ref="id7"/>
+			<label kind="guard" x="93" y="127">t&gt;=12</label>
+			<label kind="synchronisation" x="102" y="110">done!</label>
+			<label kind="assignment" x="25" y="144">react(MOVEMENT0_P2)</label>
+		</transition>
+	</template>
+	<template>
+		<name>TaskExecution0</name>
+		<parameter>const AgentScale id</parameter>
+		<declaration>clock t;
+const int[0,TaskNum] rules[MilestoneNum] = {0,1,2,3};
+
+void updateIteration()
+{
+	int i=0;
+	bool finish = true;
+	for(i=1;i&lt;=RegularTaskNum[id];i++)
+	{
+		finish &amp;= tf[id][i];
+	}
+	if(finish)
+	{
+		for(i=1;i&lt;=RegularTaskNum[id];i++)
+		{
+			tf[id][i]=false;
+		}
+		
+		iteration[id]+=1;
+		if(iteration[id]&gt;=MaxIteration)
+		{
+            scheduled[id] = true;
+			iteration[id]=MaxIteration;
+            print();
+		}
+	}
+	else
+	{
+    	finish = true;
+	}
+}
+
+int getTaskID(int taskID)
+{
+    return --taskID;
+}
+
+bool isNecessary(int taskID)
+{
+    return !tf[id][taskID]&amp;&amp;iteration[id]&lt;MaxIteration;
+}
+
+bool isBusy(int taskID)
+{
+    int id = 0;
+    bool busy = false;
+
+    for(id = 0; id &lt; AgentNum; id++)
+    {
+        if(ts[id][taskID])
+        {
+            busy = true;
+            return busy;
+        }
+    }
+
+    return busy;
+}
+
+bool shouldWait()
+{
+    int currentPosition, currentTask;
+    bool currentFinished, ready, wait, busy;
+
+    currentPosition = positions[id];
+    if(currentPosition &gt; 0 &amp;&amp; currentPosition &lt; MilestoneNum)
+    {
+        currentTask = rules[currentPosition];
+        currentFinished = tf[id][currentTask];
+        ready = idle[id]&amp;&amp;iteration[id]&lt;MaxIteration;
+        busy = isBusy(currentTask);
+        wait = !currentFinished &amp;&amp; ready &amp;&amp; busy;
+    }
+    else
+    {
+        wait = false;
+    }
+
+    return wait;   
+}
+
+bool isConducted(int target)
+{
+    int taskID = getTaskID(target);
+    bool isNext = (next_action.agent_id == id) &amp;&amp;
+                   (next_action.action_type == TASKEXE) &amp;&amp;
+                   (next_action.target_location_id == target);
+    bool isAllowed = false;
+
+    if(taskID &gt;= 0)
+    {
+        isAllowed = no_action &amp;&amp; !isBusy(taskID) &amp;&amp; isNecessary(taskID);
+    }
+    else
+    {
+        isAllowed = no_action;
+    }
+
+    return idle[id] &amp;&amp; (isAllowed || isNext);
+}
+
+void update(int target)
+{
+    t = 0;
+    idle[id] = false;
+    scheduled[id] = true;
+    locations[id][TASKEXE]=target;
+}
+
+void react(int target)
+{
+    t = 0;
+    idle[id] = true;
+    scheduled[id] = false;
+    locations[id][TASKEXE]=target;
+    updateIteration();
+}
+
+</declaration>
+		<location id="id13" x="-697" y="-272">
+			<name x="-707" y="-306">Rest</name>
+		</location>
+		<location id="id14" x="-255" y="-323">
+			<committed/>
+		</location>
+		<location id="id15" x="-272" y="-51">
+			<committed/>
+		</location>
+		<location id="id16" x="-697" y="-102">
+			<committed/>
+		</location>
+		<location id="id17" x="-612" y="-357">
+			<committed/>
+		</location>
+		<location id="id18" x="-578" y="-102">
+			<name x="-561" y="-110">Waiting</name>
+		</location>
+		<location id="id19" x="-408" y="-204">
+			<name x="-418" y="-234">T0</name>
+		</location>
+		<location id="id20" x="-408" y="-501">
+			<name x="-418" y="-531">T1</name>
+			<label kind="invariant" x="-418" y="-486">t&lt;=15</label>
+		</location>
+		<location id="id21" x="-102" y="-204">
+			<name x="-112" y="-234">T2</name>
+			<label kind="invariant" x="-85" y="-221">t&lt;=8</label>
+		</location>
+		<location id="id22" x="-408" y="102">
+			<name x="-418" y="72">T3</name>
+			<label kind="invariant" x="-418" y="117">t&lt;=15</label>
+		</location>
+		<init ref="id19"/>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-697" y="-263">iteration[id]&gt;=MaxIteration</label>
+			<label kind="synchronisation" x="-697" y="-246">exe?</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id14"/>
+			<target ref="id19"/>
+			<label kind="synchronisation" x="-459" y="-280">someoneDone[positions[id]]!</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id21"/>
+			<target ref="id14"/>
+			<label kind="guard" x="-229" y="-255">t&gt;=8</label>
+			<label kind="synchronisation" x="-229" y="-272">done!</label>
+			<label kind="assignment" x="-229" y="-306">ts[id][2]=false,tf[id][2]=true,
+react(TASKEXE0_T0)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id15"/>
+			<target ref="id19"/>
+			<label kind="synchronisation" x="-382" y="-102">someoneDone[positions[id]]!</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id22"/>
+			<target ref="id15"/>
+			<label kind="guard" x="-340" y="25">t&gt;=15</label>
+			<label kind="synchronisation" x="-340" y="8">done!</label>
+			<label kind="assignment" x="-340" y="-25">ts[id][3]=false,tf[id][3]=true,
+react(TASKEXE0_T0)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id16"/>
+			<target ref="id19"/>
+			<label kind="assignment" x="-688" y="-85">react(TASKEXE0_T0)</label>
+			<nail x="-697" y="-68"/>
+			<nail x="-476" y="-68"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id18"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-773" y="-136">someoneDone[positions[id]]?</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id17"/>
+			<target ref="id19"/>
+			<label kind="synchronisation" x="-654" y="-306">someoneDone[positions[id]]!</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id20"/>
+			<target ref="id17"/>
+			<label kind="guard" x="-637" y="-484">t&gt;=10</label>
+			<label kind="synchronisation" x="-637" y="-467">done!</label>
+			<label kind="assignment" x="-637" y="-450">ts[id][1]=false,tf[id][1]=true,
+react(TASKEXE0_T0)</label>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id18"/>
+			<label kind="guard" x="-688" y="-204">shouldWait() &amp;&amp; 
+isConducted(TASKEXE0_WAITING)</label>
+			<label kind="synchronisation" x="-688" y="-221">exe?</label>
+			<label kind="assignment" x="-688" y="-170">update(TASKEXE0_WAITING)</label>
+			<nail x="-544" y="-204"/>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id20"/>
+			<label kind="guard" x="-467" y="-416">positions[id]==1 &amp;&amp; 
+isConducted(TASKEXE0_T1)</label>
+			<label kind="synchronisation" x="-467" y="-374">exe?</label>
+			<label kind="assignment" x="-501" y="-357">ts[id][1]=true,tf[id][1]=false,
+update(TASKEXE0_T1)</label>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id21"/>
+			<label kind="guard" x="-331" y="-221">positions[id]==2 &amp;&amp; 
+tf[id][1] &amp;&amp; 
+isConducted(TASKEXE0_T2)</label>
+			<label kind="synchronisation" x="-331" y="-238">exe?</label>
+			<label kind="assignment" x="-331" y="-161">ts[id][2]=true,tf[id][2]=false,
+update(TASKEXE0_T2)</label>
+		</transition>
+		<transition>
+			<source ref="id19"/>
+			<target ref="id22"/>
+			<label kind="guard" x="-603" y="-59">positions[id]==3 &amp;&amp;
+tf[id][2] &amp;&amp;
+isConducted(TASKEXE0_T3)</label>
+			<label kind="synchronisation" x="-603" y="0">exe?</label>
+			<label kind="assignment" x="-603" y="17">ts[id][3]=true,tf[id][3]=false,
+update(TASKEXE0_T3)</label>
+		</transition>
+	</template>
+	<template>
+		<name>Conductor</name>
+		<declaration>bool minimization = false;
+void makeDecision()
+{
+    int l_tf0[TaskNum], l_tf1[TaskNum], l_tf2[TaskNum];
+    int l_location0[2], l_location1[2], l_location2[2];
+    int l_iteration[AgentNum];
+    int i = 0, j = 0, action_id = -1, l_task_number = TaskNum;
+
+    for(i = 0; i &lt; TaskNum; i++)
+    {
+        l_tf0[i] = tf[0][i];
+        l_tf1[i] = tf[1][i];
+        l_tf2[i] = tf[2][i];
+    }
+    
+    l_location0[MOVEMENT] = locations[0][MOVEMENT];
+    l_location0[TASKEXE] = locations[0][TASKEXE];
+    l_location1[MOVEMENT] = locations[1][MOVEMENT];
+    l_location1[TASKEXE] = locations[1][TASKEXE];
+    l_location2[MOVEMENT] = locations[2][MOVEMENT];
+    l_location2[TASKEXE] = locations[2][TASKEXE];
+
+    for(i = 0; i &lt; AgentNum; i++)
+    {
+        l_iteration[i] = iteration[i];
+    }
+
+    action_id = make_decision(minimization, l_iteration, l_task_number, l_tf0, l_tf1, l_tf2, l_location0, l_location1, l_location2);
+
+    if(action_id != -1)
+    {
+        next_action = map_actions[action_id];
+        no_action = false;
+    }
+    else
+    {
+        no_action = true;
+    }
+}
+
+bool IsMove()
+{
+    return no_action || (!no_action &amp;&amp; next_action.action_type == MOVEMENT);
+}
+
+bool IsExe()
+{
+    return no_action || (!no_action &amp;&amp; next_action.action_type == TASKEXE);
+}
+
+bool isFinish()
+{
+    int i = 0;
+    bool finish = true; 
+
+    for(i = 0; i &lt; AgentNum; i++)
+    {
+        finish &amp;= (iteration[i] &gt;= MaxIteration);
+    }
+
+    return finish;
+}
+
+bool isScheduled()
+{
+    int i = 0;
+    bool ready = true; 
+
+    for(i = 0; i &lt; AgentNum; i++)
+    {
+        ready &amp;= (scheduled[i] || iteration[i]&gt;=MaxIteration);
+    }
+
+    return ready;
+}
+
+void updateAction()
+{
+    next_action.agent_id = -1;
+    next_action.action_type = -1;
+    next_action.original_location_id = -1;
+    next_action.target_location_id = -1;
+}</declaration>
+		<location id="id23" x="-59" y="76">
+		</location>
+		<location id="id24" x="-34" y="34">
+			<urgent/>
+		</location>
+		<location id="id25" x="-34" y="-136">
+			<urgent/>
+		</location>
+		<location id="id26" x="-34" y="-212">
+			<urgent/>
+		</location>
+		<location id="id27" x="-34" y="-306">
+			<committed/>
+		</location>
+		<init ref="id27"/>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id26"/>
+			<label kind="synchronisation" x="-110" y="-263">done?</label>
+			<nail x="-59" y="-255"/>
+			<nail x="-76" y="-238"/>
+		</transition>
+		<transition>
+			<source ref="id27"/>
+			<target ref="id26"/>
+			<label kind="assignment" x="-25" y="-272">test(),
+initialize()</label>
+		</transition>
+		<transition>
+			<source ref="id23"/>
+			<target ref="id26"/>
+			<label kind="synchronisation" x="-229" y="-187">done?</label>
+			<nail x="-238" y="76"/>
+			<nail x="-238" y="-212"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id26"/>
+			<label kind="guard" x="51" y="51">!isScheduled()</label>
+			<nail x="59" y="76"/>
+			<nail x="170" y="76"/>
+			<nail x="170" y="-212"/>
+		</transition>
+		<transition>
+			<source ref="id24"/>
+			<target ref="id23"/>
+			<label kind="guard" x="-161" y="42">isScheduled()</label>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id24"/>
+			<label kind="guard" x="76" y="-127">IsExe()</label>
+			<label kind="synchronisation" x="93" y="-110">exe!</label>
+			<label kind="assignment" x="17" y="-93">updateAction()</label>
+			<nail x="102" y="-136"/>
+			<nail x="102" y="34"/>
+		</transition>
+		<transition>
+			<source ref="id25"/>
+			<target ref="id24"/>
+			<label kind="guard" x="-187" y="-127">IsMove()</label>
+			<label kind="synchronisation" x="-187" y="-110">run!</label>
+			<label kind="assignment" x="-195" y="-93">updateAction()</label>
+			<nail x="-170" y="-136"/>
+			<nail x="-170" y="34"/>
+		</transition>
+		<transition>
+			<source ref="id26"/>
+			<target ref="id25"/>
+			<label kind="guard" x="-68" y="-195">!isFinish()</label>
+			<label kind="assignment" x="-76" y="-178">makeDecision()</label>
+		</transition>
+	</template>
+	<system>movement0 = Movement0(0);
+taskExe0 = TaskExecution0(0);
+movement1 = Movement0(1);
+taskExe1 = TaskExecution0(1);
+movement2 = Movement0(2);
+taskExe2 = TaskExecution0(2);
+conductor = Conductor();
+
+system movement0, taskExe0, movement1, taskExe1, movement2, taskExe2, conductor;</system>
+	<queries>
+		<option key="--diagnostic" value="2"/>
+		<query>
+			<formula>E&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration))</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2021-08-03 11:33:35 +0200">
+				<option key="--search-order" value="0"/>
+				<option key="--statespace-consumption" value="1"/>
+				<option key="--diagnostic" value="2"/>
+				<option key="--backwards-order" value="1"/>
+				<option key="--priority-order" value="0"/>
+				<option key="--generate-strategy" value="2"/>
+				<option key="--extrapolation" value="0"/>
+				<option key="--hashtable-size" value="27"/>
+				<option key="--filter" value="0"/>
+				<option key="--learning-method" value="4"/>
+				<option key="--good-runs" value="200"/>
+				<option key="--total-runs" value="500"/>
+				<option key="--runs-pr-state" value="100"/>
+				<option key="--eval-runs" value="100"/>
+				<option key="--max-iterations" value="30"/>
+				<option key="--max-imitation" value="5"/>
+				<option key="--reset-no-better" value="10"/>
+				<option key="--max-reset-learning" value="3"/>
+				<option key="--qlearning-alpha" value="2"/>
+				<option key="--split-upper-t" value="1.75"/>
+				<option key="--split-lower-t" value="0.15"/>
+				<option key="--split-ks" value="0.25"/>
+				<option key="--split-filter-rate" value="0.02"/>
+				<option key="--split-filter-val" value="0.99"/>
+				<option key="--discount" value="0.99"/>
+				<option key="--random-search-limit" value="0.5"/>
+				<option key="--deterministic-search-limit" value="0.5"/>
+				<option key="--indifference-scale" value="0.005"/>
+				<option key="--indifference-smoothing" value="10"/>
+				<option key="--lower-delta" value="0.01"/>
+				<option key="--upper-delta" value="0.01"/>
+				<option key="--alpha" value="0.05"/>
+				<option key="--beta" value="0.05"/>
+				<option key="--epsilon" value="0.05"/>
+				<option key="--u0" value="0.9"/>
+				<option key="--u1" value="1.1"/>
+				<option key="--histogram-bar-width" value="0.0"/>
+				<option key="--histogram-bar-count" value="0"/>
+				<option key="--resolution" value="4000"/>
+				<option key="--discretization" value="0.01"/>
+				<option key="--truncation-error" value="0.01"/>
+				<option key="--truncation-time-error" value="0.01"/>
+			</result>
+		</query>
+		<query>
+			<formula>A&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration))</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2021-07-29 11:23:39 +0200">
+				<option key="--search-order" value="0"/>
+				<option key="--statespace-consumption" value="1"/>
+				<option key="--diagnostic" value="2"/>
+				<option key="--backwards-order" value="1"/>
+				<option key="--priority-order" value="0"/>
+				<option key="--generate-strategy" value="2"/>
+				<option key="--extrapolation" value="0"/>
+				<option key="--hashtable-size" value="27"/>
+				<option key="--filter" value="0"/>
+				<option key="--learning-method" value="4"/>
+				<option key="--good-runs" value="200"/>
+				<option key="--total-runs" value="500"/>
+				<option key="--runs-pr-state" value="100"/>
+				<option key="--eval-runs" value="100"/>
+				<option key="--max-iterations" value="30"/>
+				<option key="--max-imitation" value="5"/>
+				<option key="--reset-no-better" value="10"/>
+				<option key="--max-reset-learning" value="3"/>
+				<option key="--qlearning-alpha" value="2"/>
+				<option key="--split-upper-t" value="1.75"/>
+				<option key="--split-lower-t" value="0.15"/>
+				<option key="--split-ks" value="0.25"/>
+				<option key="--split-filter-rate" value="0.02"/>
+				<option key="--split-filter-val" value="0.99"/>
+				<option key="--discount" value="0.99"/>
+				<option key="--random-search-limit" value="0.5"/>
+				<option key="--deterministic-search-limit" value="0.5"/>
+				<option key="--indifference-scale" value="0.005"/>
+				<option key="--indifference-smoothing" value="10"/>
+				<option key="--lower-delta" value="0.01"/>
+				<option key="--upper-delta" value="0.01"/>
+				<option key="--alpha" value="0.05"/>
+				<option key="--beta" value="0.05"/>
+				<option key="--epsilon" value="0.05"/>
+				<option key="--u0" value="0.9"/>
+				<option key="--u1" value="1.1"/>
+				<option key="--histogram-bar-width" value="0.0"/>
+				<option key="--histogram-bar-count" value="0"/>
+				<option key="--resolution" value="4000"/>
+				<option key="--discretization" value="0.01"/>
+				<option key="--truncation-error" value="0.01"/>
+				<option key="--truncation-time-error" value="0.01"/>
+			</result>
+		</query>
+	</queries>
+</nta>

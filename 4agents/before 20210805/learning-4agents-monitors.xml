@@ -1,0 +1,989 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.5//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_5.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+const int AgentNum = 4;
+typedef int[0,AgentNum-1] AgentScale;
+const int TaskNum = 4;
+const int EventNum = 0;
+const int MilestoneNum = 4;
+const int MaxIteration = 1;
+const int SignalNum = 1;
+typedef int[0,SignalNum-1] SignalScale;
+const int REWARDRATE = 100;
+
+//NEED TO CHANGE WHEN AGENTS INCREASE
+const int RegularTaskNum[AgentNum] = {3,3,3,3};
+const int MAXTIME = 500;
+int[-1,MilestoneNum] position[AgentNum] = {0,0,0,0};
+bool tf[AgentNum][TaskNum]={{true,false,false,false},{true,false,false,false},
+{true,false,false,false},{true,false,false,false}};
+bool ts[AgentNum][TaskNum]={{true,false,false,false},{true,false,false,false},
+{true,false,false,false},{true,false,false,false}};
+int iteration[AgentNum] = {0,0,0,0};
+bool idle[AgentNum] = {true,true,true,true};
+clock signals[AgentNum][SignalNum];
+bool warns[AgentNum][SignalNum];
+bool alive[AgentNum] = {true,true,true,true};
+//END
+
+clock globalTime;
+broadcast chan react[AgentNum][SignalNum];
+broadcast chan someoneDone[MilestoneNum];
+const int[0,TaskNum] rules[MilestoneNum] = {0,1,2,3};
+
+int tasks_finished() 
+{
+    int a;
+    int t;
+    int finished = 0;
+    for(a : AgentScale) 
+    {
+        for(t = 0; t &lt; TaskNum; ++t)
+        {
+            if(tf[a][t]) ++finished;
+        }
+        finished += iteration[a]*TaskNum;
+    }
+    return finished;
+}
+
+//int penalty = 0; 
+//int[0,5] mistakes[AgentNum];
+void punish(int agentID, int currentPosition, int targetPosition)
+{
+    /*int currentTask = rules[currentPosition];
+    int targetTask = rules[targetPosition];
+    bool ready = idle[agentID]&amp;&amp;iteration[agentID]&lt;MaxIteration;
+    bool currentFinished = tf[agentID][currentTask];
+    bool targetFinished = tf[agentID][targetTask];
+    bool rightChoice = currentFinished&amp;!targetFinished;
+
+    if(!rightChoice)
+    {
+        if(mistakes[agentID] &lt; 5)
+        {
+            mistakes[agentID]++;
+        }
+        if(penalty &lt;= MAXTIME)
+        {
+            penalty = penalty + 10;
+        }
+    }*/
+
+    idle[agentID] = false;
+}
+
+void reward(int agentID)
+{
+    /*if(mistakes[agentID] &gt; 0)
+    {
+        mistakes[agentID]--;
+    }*/
+}
+
+bool isNecessary(int agentID, int taskID)
+{
+    return alive[agentID] &amp;&amp;
+           !warns[agentID][0] &amp;&amp;
+           !tf[agentID][taskID] &amp;&amp;
+           iteration[agentID]&lt;MaxIteration;
+}
+
+bool isBusy(int taskID)
+{
+    int id = 0;
+    bool busy = false;
+
+
+    for(id = 0; id &lt; AgentNum; id++)
+    {
+        if(ts[id][taskID])
+        {
+            busy = true;
+            return busy;
+        }
+    }
+
+    return busy;
+}
+
+bool isReady(int agentID, int currentPosition, int targetPosition)
+{
+    int currentTask = rules[currentPosition];
+    int targetTask = rules[targetPosition];
+    bool currentFinished = tf[agentID][currentTask];
+    bool targetFinished = tf[agentID][targetTask];
+    bool jobDone = currentFinished || (!targetFinished);
+    bool ready = idle[agentID]&amp;&amp;iteration[agentID]&lt;MaxIteration;
+
+    //return alive[agentID] &amp;&amp; ready &amp;&amp; (jobDone||mistakes[agentID]&lt;4);
+    return alive[agentID] &amp;&amp; ready &amp;&amp; jobDone;
+    //return alive[agentID] &amp;&amp; ready;
+}
+
+bool shouldWait(int agentID)
+{
+    int currentPosition, currentTask;
+    bool currentFinished, ready, wait, busy;
+
+    currentPosition = position[agentID];
+    if(currentPosition != -1)
+    {
+        currentTask = rules[currentPosition];
+        currentFinished = tf[agentID][currentTask];
+        ready = idle[agentID]&amp;&amp;iteration[agentID]&lt;MaxIteration;
+        busy = isBusy(currentTask);
+        wait = !currentFinished &amp;&amp; ready &amp;&amp; busy;
+    }
+    else
+    {
+        wait = false;
+    }
+
+    return wait;   
+}
+
+
+</declaration>
+	<template>
+		<name>Movement0</name>
+		<parameter>const AgentScale id</parameter>
+		<declaration>clock t;
+</declaration>
+		<location id="id0" x="0" y="-238">
+			<name x="-10" y="-268">P0</name>
+			<committed/>
+		</location>
+		<location id="id1" x="-416" y="-102">
+			<name x="-426" y="-132">F0T1</name>
+			<label kind="invariant" x="-399" y="-85">t&lt;=25</label>
+		</location>
+		<location id="id2" x="0" y="-127">
+			<name x="-10" y="-157">F0T2</name>
+			<label kind="invariant" x="-10" y="-112">t&lt;=26</label>
+		</location>
+		<location id="id3" x="408" y="-102">
+			<name x="398" y="-132">F0T3</name>
+			<label kind="invariant" x="398" y="-87">t&lt;=30</label>
+		</location>
+		<location id="id4" x="-416" y="34">
+			<name x="-446" y="42">P1</name>
+			<label kind="exponentialrate" x="-426" y="68">1</label>
+		</location>
+		<location id="id5" x="-204" y="34">
+			<name x="-214" y="4">F1T2</name>
+			<label kind="invariant" x="-170" y="8">t&lt;=15</label>
+		</location>
+		<location id="id6" x="0" y="178">
+			<name x="-10" y="148">F1T3</name>
+			<label kind="invariant" x="-8" y="187">t&lt;=18</label>
+		</location>
+		<location id="id7" x="0" y="34">
+			<name x="-10" y="4">P2</name>
+			<label kind="exponentialrate" x="-10" y="68">1</label>
+		</location>
+		<location id="id8" x="-204" y="-102">
+			<name x="-214" y="-132">F2T1</name>
+			<label kind="invariant" x="-214" y="-87">t&lt;=15</label>
+		</location>
+		<location id="id9" x="204" y="-102">
+			<name x="194" y="-132">F2T3</name>
+			<label kind="invariant" x="194" y="-87">t&lt;=12</label>
+		</location>
+		<location id="id10" x="408" y="34">
+			<name x="398" y="4">P3</name>
+			<label kind="exponentialrate" x="398" y="68">1</label>
+		</location>
+		<location id="id11" x="0" y="272">
+			<name x="-10" y="242">F3T1</name>
+			<label kind="invariant" x="-10" y="287">t&lt;=18</label>
+		</location>
+		<location id="id12" x="204" y="34">
+			<name x="161" y="42">F3T2</name>
+			<label kind="invariant" x="194" y="49">t&lt;=12</label>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-475" y="-195">isReady(id,0,1)</label>
+			<label kind="assignment" x="-603" y="-178">t=0,position[id]=-1,punish(id,0,1)</label>
+			<nail x="-416" y="-238"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id1"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-501" y="-76">t&gt;=25</label>
+			<label kind="assignment" x="-501" y="-59">t=0,position[id]=1,idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-51" y="-195">isReady(id,0,2)</label>
+			<label kind="assignment" x="-110" y="-178">t=0,position[id]=-1,punish(id,0,2)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id2"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-8" y="-76">t&gt;=26</label>
+			<label kind="assignment" x="-102" y="-93">t=0,position[id]=2,idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id3"/>
+			<label kind="guard" x="374" y="-204">isReady(id,0,3)</label>
+			<label kind="assignment" x="247" y="-187">t=0,position[id]=-1,punish(id,0,3)</label>
+			<nail x="408" y="-238"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id3"/>
+			<target ref="id10"/>
+			<label kind="guard" x="399" y="-51">t&gt;=30</label>
+			<label kind="assignment" x="391" y="-68">t=0,position[id]=3,idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-340" y="17">isReady(id,1,2)</label>
+			<label kind="assignment" x="-374" y="42">t=0,position[id]=-1,punish(id,1,2)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-93" y="34">t&gt;=15</label>
+			<label kind="assignment" x="-178" y="59">t=0,position[id]=2,idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-221" y="110">isReady(id,1,3)</label>
+			<label kind="assignment" x="-280" y="127">t=0,position[id]=-1,punish(id,1,3)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id6"/>
+			<target ref="id10"/>
+			<label kind="guard" x="136" y="102">t&gt;=18</label>
+			<label kind="assignment" x="136" y="85">t=0,position[id]=3,idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-127" y="-17">isReady(id,2,1)</label>
+			<label kind="assignment" x="-263" y="-59">t=0,position[id]=-1,punish(id,2,1)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id8"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-340" y="0">t&gt;=15</label>
+			<label kind="assignment" x="-450" y="-25">t=0,position[id]=1,idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id9"/>
+			<label kind="guard" x="85" y="-76">isReady(id,2,3)</label>
+			<label kind="assignment" x="17" y="-34">t=0,position[id]=-1,punish(id,2,3)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="guard" x="314" y="-25">t&gt;=12</label>
+			<label kind="assignment" x="127" y="-51">t=0,position[id]=3,idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="212" y="178">isReady(id,3,1)</label>
+			<label kind="assignment" x="119" y="204">t=0,position[id]=-1,punish(id,3,1)</label>
+			<nail x="408" y="119"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id11"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-255" y="178">t&gt;=18</label>
+			<label kind="assignment" x="-331" y="204">t=0,position[id]=1,idle[id]=true</label>
+			<nail x="-416" y="119"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id12"/>
+			<label kind="guard" x="-51" y="228">isReady(id,3,2)</label>
+			<label kind="assignment" x="255" y="51">t=0,position[id]=-1,punish(id,3,2)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id12"/>
+			<target ref="id7"/>
+			<label kind="guard" x="76" y="42">t&gt;=12</label>
+			<label kind="assignment" x="42" y="8">t=0,position[id]=2,idle[id]=true</label>
+		</transition>
+	</template>
+	<template>
+		<name>TaskExecution0</name>
+		<parameter>const AgentScale id</parameter>
+		<declaration>clock t;
+
+void updateIteration()
+{
+	int i=0;
+	bool finish = true;
+	for(i=1;i&lt;=RegularTaskNum[id];i++)
+	{
+		finish &amp;= tf[id][i];
+	}
+	if(finish)
+	{
+		for(i=1;i&lt;=RegularTaskNum[id];i++)
+		{
+			tf[id][i]=false;
+		}
+		
+		iteration[id]+=1;
+		if(iteration[id]&gt;=MaxIteration)
+		{
+			iteration[id]=MaxIteration;
+		}
+	}
+	else
+	{
+    	finish = true;
+	}
+}
+
+</declaration>
+		<location id="id13" x="-323" y="-76">
+			<committed/>
+		</location>
+		<location id="id14" x="-408" y="68">
+			<name x="-442" y="59">T4</name>
+			<label kind="invariant" x="-418" y="85">t&lt;=7</label>
+		</location>
+		<location id="id15" x="-578" y="-102">
+			<name x="-646" y="-136">Waiting</name>
+		</location>
+		<location id="id16" x="-408" y="-204">
+			<name x="-425" y="-246">T0</name>
+			<label kind="exponentialrate" x="-382" y="-238">1</label>
+		</location>
+		<location id="id17" x="-561" y="-484">
+			<name x="-571" y="-514">T1</name>
+			<label kind="invariant" x="-571" y="-469">t&lt;=10</label>
+		</location>
+		<location id="id18" x="-263" y="-484">
+			<name x="-273" y="-514">T2</name>
+			<label kind="invariant" x="-246" y="-501">t&lt;=8</label>
+		</location>
+		<location id="id19" x="-153" y="-68">
+			<name x="-136" y="-77">T3</name>
+			<label kind="invariant" x="-163" y="-53">t&lt;=15</label>
+		</location>
+		<init ref="id16"/>
+		<transition controllable="false">
+			<source ref="id13"/>
+			<target ref="id16"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id14"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-390" y="-38">t&gt;=7</label>
+			<label kind="synchronisation" x="-390" y="-21">react[id][0]!</label>
+			<label kind="assignment" x="-391" y="0">t=0,idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id14"/>
+			<label kind="guard" x="-535" y="-85">warns[id][0]&amp;&amp;
+alive[id]&amp;&amp;
+position[id]==1</label>
+			<label kind="assignment" x="-552" y="-17">t=0,idle[id]=false</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="synchronisation" x="-654" y="-170">someoneDone[position[id]]?</label>
+			<label kind="assignment" x="-578" y="-153">t=0,idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id15"/>
+			<label kind="guard" x="-620" y="-229">shouldWait(id)</label>
+			<label kind="assignment" x="-620" y="-204">t=0,idle[id]=false</label>
+			<nail x="-578" y="-204"/>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id17"/>
+			<label kind="guard" x="-858" y="-416">((!isBusy(1))&amp;&amp;(position[id]==1))&amp;&amp;isNecessary(id,1)</label>
+			<label kind="assignment" x="-909" y="-391">t=0,ts[id][1]=true,tf[id][1]=false,idle[id]=false,reward(id)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id17"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-569" y="-357">t&gt;=10</label>
+			<label kind="synchronisation" x="-663" y="-340">someoneDone[position[id]]!</label>
+			<label kind="assignment" x="-705" y="-323">t=0,ts[id][1]=false,tf[id][1]=true,
+updateIteration(),idle[id]=true</label>
+			<nail x="-561" y="-289"/>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id18"/>
+			<label kind="guard" x="-374" y="-340">((tf[id][1]&amp;&amp;!isBusy(2))&amp;&amp;(position[id]==2))&amp;&amp;isNecessary(id,2)</label>
+			<label kind="assignment" x="-374" y="-314">t=0,ts[id][2]=true,tf[id][2]=false,idle[id]=false,reward(id)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id18"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-391" y="-459">t&gt;=8</label>
+			<label kind="synchronisation" x="-391" y="-391">someoneDone[position[id]]!</label>
+			<label kind="assignment" x="-391" y="-433">t=0,ts[id][2]=false,tf[id][2]=true,
+updateIteration(),idle[id]=true</label>
+			<nail x="-408" y="-382"/>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id19"/>
+			<label kind="guard" x="-357" y="-178">((tf[id][2]&amp;&amp;!isBusy(3))&amp;&amp;(position[id]==3))&amp;&amp;isNecessary(id,3)</label>
+			<label kind="assignment" x="-348" y="-153">t=0,ts[id][3]=true,tf[id][3]=false,idle[id]=false,reward(id)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id19"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-306" y="-255">t&gt;=15</label>
+			<label kind="synchronisation" x="-306" y="-238">someoneDone[position[id]]!</label>
+			<label kind="assignment" x="-306" y="-221">t=0,ts[id][3]=false,tf[id][3]=true,
+updateIteration(),idle[id]=true</label>
+			<nail x="-229" y="-204"/>
+		</transition>
+	</template>
+	<template>
+		<name>Monitor</name>
+		<parameter>const AgentScale agentID, const SignalScale signalID, const int threshold, const int limit</parameter>
+		<location id="id20" x="-569" y="-119">
+			<name x="-620" y="-153">Stop</name>
+		</location>
+		<location id="id21" x="59" y="17">
+			<name x="59" y="-16">Consumed</name>
+		</location>
+		<location id="id22" x="-204" y="17">
+			<name x="-195" y="-16">Warning</name>
+			<label kind="invariant" x="-263" y="34">signals[agentID][signalID]&lt;= limit</label>
+		</location>
+		<location id="id23" x="-569" y="17">
+			<name x="-663" y="-8">Sufficient</name>
+			<label kind="invariant" x="-790" y="34">signals[agentID][signalID]&lt;=threshold</label>
+		</location>
+		<init ref="id23"/>
+		<transition controllable="false">
+			<source ref="id22"/>
+			<target ref="id20"/>
+			<label kind="guard" x="-551" y="-153">iteration[agentID]&gt;=MaxIteration</label>
+			<nail x="-204" y="-119"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id23"/>
+			<target ref="id20"/>
+			<label kind="guard" x="-833" y="-76">iteration[agentID]&gt;=MaxIteration</label>
+		</transition>
+		<transition>
+			<source ref="id22"/>
+			<target ref="id23"/>
+			<label kind="synchronisation" x="-441" y="68">react[agentID][signalID]?</label>
+			<label kind="assignment" x="-441" y="85">warns[agentID][signalID]=false,
+signals[agentID][signalID]=0</label>
+			<nail x="-204" y="85"/>
+			<nail x="-459" y="85"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id22"/>
+			<target ref="id21"/>
+			<label kind="guard" x="-170" y="-59">signals[agentID][signalID]&gt;=limit&amp;&amp;
+iteration[agentID]&lt;MaxIteration</label>
+			<label kind="assignment" x="-119" y="-8">alive[agentID]=false</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id23"/>
+			<target ref="id22"/>
+			<label kind="guard" x="-544" y="-59">signals[agentID][signalID]&gt;=threshold&amp;&amp;
+iteration[agentID]&lt;MaxIteration</label>
+			<label kind="assignment" x="-544" y="-17">warns[agentID][signalID]=true</label>
+		</transition>
+	</template>
+	<system>movement0 = Movement0(0);
+taskExe0 = TaskExecution0(0);
+monitor00 = Monitor(0, 0, 80,110);
+
+movement1 = Movement0(1);
+taskExe1 = TaskExecution0(1);
+monitor10 = Monitor(1, 0, 80,110);
+
+movement2 = Movement0(2);
+taskExe2 = TaskExecution0(2);
+monitor20 = Monitor(2, 0, 80,110);
+
+movement3 = Movement0(3);
+taskExe3 = TaskExecution0(3);
+monitor30 = Monitor(3, 0, 80,110);
+
+system movement0, taskExe0, monitor00, 
+
+movement1, taskExe1, monitor10, 
+
+movement2, taskExe2, monitor20, 
+
+movement3, taskExe3, monitor30;</system>
+	<queries>
+		<option key="--diagnostic" value="2"/>
+		<option key="--learning-method" value="4"/>
+		<option key="--good-runs" value="500"/>
+		<option key="--runs-pr-state" value="500"/>
+		<option key="--alpha" value="1.0E-4"/>
+		<option key="--beta" value="1.0E-4"/>
+		<option key="--epsilon" value="0.001"/>
+		<query>
+			<formula>strategy opt = minE(globalTime-(tasks_finished()*REWARDRATE))[&lt;=MAXTIME]{
+movement0.location, taskExe0.location, monitor00.location,
+movement1.location, taskExe1.location, monitor10.location,
+movement2.location, taskExe2.location, monitor20.location,
+movement3.location, taskExe3.location, monitor30.location,
+iteration[0], iteration[1], iteration[2], iteration[3],
+warns[0][0], warns[1][0], warns[2][0], warns[3][0], 
+alive[0], alive[1], alive[2], alive[3],
+tf[0][0], tf[0][1], tf[0][2], tf[0][3], tf[1][0], tf[1][1], tf[1][2], tf[1][3],
+tf[2][0], tf[2][1], tf[2][2], tf[2][3], tf[3][0], tf[3][1], tf[3][2], tf[3][3]}-&gt;{}:&lt;&gt; (((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) || globalTime &gt;= MAXTIME)</formula>
+			<comment>minE(globalTime-(tasks_finished()*REWARDRATE))
+maxE((tasks_finished()*REWARDRATE) - globalTime)</comment>
+			<option key="--diagnostic" value="2"/>
+			<option key="--learning-method" value="-1"/>
+			<option key="--good-runs" value="1000"/>
+			<option key="--total-runs" value="1000"/>
+			<option key="--runs-pr-state" value="1000"/>
+			<option key="--alpha" value="1.0E-4"/>
+			<option key="--beta" value="1.0E-4"/>
+			<option key="--epsilon" value="0.001"/>
+		</query>
+		<query>
+			<formula>E[&lt;=MAXTIME;2000] (max: globalTime*((exists(i:int[0,AgentNum-1]) iteration[i] &lt; MaxIteration))) under opt</formula>
+			<comment>A[] ((taskExe0.T1 imply movement0.P1) and (taskExe1.T1 imply movement1.P1) and (taskExe2.T1 imply movement2.P1) and 
+(taskExe0.T2 imply movement0.P2) and (taskExe1.T2 imply movement1.P2) and (taskExe2.T2 imply movement2.P2) and 
+(taskExe0.T3 imply movement0.P3) and (taskExe1.T3 imply movement1.P3) and (taskExe2.T3 imply movement2.P3)) opt
+
+E&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) under opt
+
+saveStrategy("/home/ron/uppaal/projects/q_learning/output/complete_path.out", opt)</comment>
+			<result outcome="success" type="quantity" value="312.289 ± 12.2103 (99.99% CI)" timestamp="2021-06-30 04:05:30 +0200">
+				<details>312.289 ± 12.2103 (99.99% CI)</details>
+				<plot title="Probability Density Distribution" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="probability density">
+					<series title="density" type="b(7.511111)" color="0x0000ff" encoding="csv">162.0,0.011250021763904546
+169.51111115440983,0.0
+177.02222231115692,0.0
+184.53333346556676,0.04153850056516165
+192.04444462231385,0.0
+199.55555577672368,0.0
+207.06666693347077,0.0
+214.5777780878806,0.014179021894847323
+222.0888892446277,0.0
+229.6000004,0.0
+237.11111155440983,0.0033949803016943073
+244.62222271115692,0.0
+252.13333386556675,0.0
+259.64444502231385,0.0
+267.1555561767237,0.0
+274.6666673334708,0.0
+282.17777848788063,0.0
+289.6888896446277,0.0
+297.2000008,0.0
+304.71111195440983,0.0
+312.22222311115695,0.0
+319.7333342655668,0.0
+327.24444542231385,0.019105059196829
+334.7555565767237,0.0
+342.2666677334708,0.0
+349.77777888788063,0.0
+357.2888900446277,0.0
+364.8000012,0.0
+372.31111235440983,0.0
+379.82222351115695,0.0
+387.3333346655668,0.0
+394.84444582231384,0.0
+402.3555569767237,0.0
+409.8666681334708,0.0
+417.3777792878806,0.0
+424.8888904446277,0.0
+432.4000016,0.0
+439.9111127544098,0.0
+447.42222391115695,0.0
+454.9333350655668,0.0
+462.44444622231384,0.0
+469.9555573767237,0.0
+477.4666685334708,0.0
+484.9777796878806,0.0
+492.48889084325293,0.04366867318366571
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">312.288500059,0.0
+312.288500059,0.04366867318366571
+					</series>
+					<comment>Parameters: α=0.0001, ε=0.001, bucket width=7.5111, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [162, 500]
+Mean estimate of displayed sample: 312.3 ± 12.21 (99.99% CI)</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="probability">
+					<series title="probability" type="b(7.511111)" color="0x0000ff" encoding="csv">162.0,0.0845
+169.51111115440983,0.0
+177.02222231115692,0.0
+184.53333346556676,0.312
+192.04444462231385,0.0
+199.55555577672368,0.0
+207.06666693347077,0.0
+214.5777780878806,0.10650000000000001
+222.0888892446277,0.0
+229.6000004,0.0
+237.11111155440983,0.025500000000000002
+244.62222271115692,0.0
+252.13333386556675,0.0
+259.64444502231385,0.0
+267.1555561767237,0.0
+274.6666673334708,0.0
+282.17777848788063,0.0
+289.6888896446277,0.0
+297.2000008,0.0
+304.71111195440983,0.0
+312.22222311115695,0.0
+319.7333342655668,0.0
+327.24444542231385,0.14350000000000002
+334.7555565767237,0.0
+342.2666677334708,0.0
+349.77777888788063,0.0
+357.2888900446277,0.0
+364.8000012,0.0
+372.31111235440983,0.0
+379.82222351115695,0.0
+387.3333346655668,0.0
+394.84444582231384,0.0
+402.3555569767237,0.0
+409.8666681334708,0.0
+417.3777792878806,0.0
+424.8888904446277,0.0
+432.4000016,0.0
+439.9111127544098,0.0
+447.42222391115695,0.0
+454.9333350655668,0.0
+462.44444622231384,0.0
+469.9555573767237,0.0
+477.4666685334708,0.0
+484.9777796878806,0.0
+492.48889084325293,0.328
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">312.288500059,0.0
+312.288500059,0.328
+					</series>
+					<comment>Parameters: α=0.0001, ε=0.001, bucket width=7.5111, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [162, 500]
+Mean estimate of displayed sample: 312.3 ± 12.21 (99.99% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">162.0,0.0
+169.51111115440983,0.0845
+177.02222231115692,0.0845
+184.53333346556676,0.0845
+192.04444462231385,0.3965
+199.55555577672368,0.3965
+207.06666693347077,0.3965
+214.5777780878806,0.3965
+222.0888892446277,0.503
+229.6000004,0.503
+237.11111155440983,0.503
+244.62222271115692,0.5285
+252.13333386556675,0.5285
+259.64444502231385,0.5285
+267.1555561767237,0.5285
+274.6666673334708,0.5285
+282.17777848788063,0.5285
+289.6888896446277,0.5285
+297.2000008,0.5285
+304.71111195440983,0.5285
+312.22222311115695,0.5285
+319.7333342655668,0.5285
+327.24444542231385,0.5285
+334.7555565767237,0.6719999999999999
+342.2666677334708,0.6719999999999999
+349.77777888788063,0.6719999999999999
+357.2888900446277,0.6719999999999999
+364.8000012,0.6719999999999999
+372.31111235440983,0.6719999999999999
+379.82222351115695,0.6719999999999999
+387.3333346655668,0.6719999999999999
+394.84444582231384,0.6719999999999999
+402.3555569767237,0.6719999999999999
+409.8666681334708,0.6719999999999999
+417.3777792878806,0.6719999999999999
+424.8888904446277,0.6719999999999999
+432.4000016,0.6719999999999999
+439.9111127544098,0.6719999999999999
+447.42222391115695,0.6719999999999999
+454.9333350655668,0.6719999999999999
+462.44444622231384,0.6719999999999999
+469.9555573767237,0.6719999999999999
+477.4666685334708,0.6719999999999999
+484.9777796878806,0.6719999999999999
+492.48889084325293,0.6719999999999999
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">312.288500059,0.0
+312.288500059,1.0
+					</series>
+					<comment>Parameters: α=0.0001, ε=0.001, bucket width=7.5111, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [162, 500]
+Mean estimate of displayed sample: 312.3 ± 12.21 (99.99% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">162.0,0.0049395322947650465
+169.51111115440983,0.11113889184919959
+177.02222231115692,0.11113889184919959
+184.53333346556676,0.11113889184919959
+192.04444462231385,0.43976352478293906
+199.55555577672368,0.43976352478293906
+207.06666693347077,0.43976352478293906
+214.5777780878806,0.43976352478293906
+222.0888892446277,0.5466427399599814
+229.6000004,0.5466427399599814
+237.11111155440983,0.5466427399599814
+244.62222271115692,0.5719394131164268
+252.13333386556675,0.5719394131164268
+259.64444502231385,0.5719394131164268
+267.1555561767237,0.5719394131164268
+274.6666673334708,0.5719394131164268
+282.17777848788063,0.5719394131164268
+289.6888896446277,0.5719394131164268
+297.2000008,0.5719394131164268
+304.71111195440983,0.5719394131164268
+312.22222311115695,0.5719394131164268
+319.7333342655668,0.5719394131164268
+327.24444542231385,0.5719394131164268
+334.7555565767237,0.7121130049141428
+342.2666677334708,0.7121130049141428
+349.77777888788063,0.7121130049141428
+357.2888900446277,0.7121130049141428
+364.8000012,0.7121130049141428
+372.31111235440983,0.7121130049141428
+379.82222351115695,0.7121130049141428
+387.3333346655668,0.7121130049141428
+394.84444582231384,0.7121130049141428
+402.3555569767237,0.7121130049141428
+409.8666681334708,0.7121130049141428
+417.3777792878806,0.7121130049141428
+424.8888904446277,0.7121130049141428
+432.4000016,0.7121130049141428
+439.9111127544098,0.7121130049141428
+447.42222391115695,0.7121130049141428
+454.9333350655668,0.7121130049141428
+462.44444622231384,0.7121130049141428
+469.9555573767237,0.7121130049141428
+477.4666685334708,0.7121130049141428
+484.9777796878806,0.7121130049141428
+492.48889084325293,0.7121130049141428
+					</series>
+					<series title="upper limit" type="k" color="0xdd0000" encoding="csv">162.0,0.0
+169.51111115440983,0.06224259830753724
+177.02222231115692,0.06224259830753724
+184.53333346556676,0.06224259830753724
+192.04444462231385,0.3543218565363199
+199.55555577672368,0.3543218565363199
+207.06666693347077,0.3543218565363199
+214.5777780878806,0.3543218565363199
+222.0888892446277,0.45932581207060214
+229.6000004,0.45932581207060214
+237.11111155440983,0.45932581207060214
+244.62222271115692,0.48476179630328836
+252.13333386556675,0.48476179630328836
+259.64444502231385,0.48476179630328836
+267.1555561767237,0.48476179630328836
+274.6666673334708,0.48476179630328836
+282.17777848788063,0.48476179630328836
+289.6888896446277,0.48476179630328836
+297.2000008,0.48476179630328836
+304.71111195440983,0.48476179630328836
+312.22222311115695,0.48476179630328836
+319.7333342655668,0.48476179630328836
+327.24444542231385,0.48476179630328836
+334.7555565767237,0.6300828035872215
+342.2666677334708,0.6300828035872215
+349.77777888788063,0.6300828035872215
+357.2888900446277,0.6300828035872215
+364.8000012,0.6300828035872215
+372.31111235440983,0.6300828035872215
+379.82222351115695,0.6300828035872215
+387.3333346655668,0.6300828035872215
+394.84444582231384,0.6300828035872215
+402.3555569767237,0.6300828035872215
+409.8666681334708,0.6300828035872215
+417.3777792878806,0.6300828035872215
+424.8888904446277,0.6300828035872215
+432.4000016,0.6300828035872215
+439.9111127544098,0.6300828035872215
+447.42222391115695,0.6300828035872215
+454.9333350655668,0.6300828035872215
+462.44444622231384,0.6300828035872215
+469.9555573767237,0.6300828035872215
+477.4666685334708,0.6300828035872215
+484.9777796878806,0.6300828035872215
+492.48889084325293,0.6300828035872215
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">162.0,0.0
+169.51111115440983,0.0845
+177.02222231115692,0.0845
+184.53333346556676,0.0845
+192.04444462231385,0.3965
+199.55555577672368,0.3965
+207.06666693347077,0.3965
+214.5777780878806,0.3965
+222.0888892446277,0.503
+229.6000004,0.503
+237.11111155440983,0.503
+244.62222271115692,0.5285
+252.13333386556675,0.5285
+259.64444502231385,0.5285
+267.1555561767237,0.5285
+274.6666673334708,0.5285
+282.17777848788063,0.5285
+289.6888896446277,0.5285
+297.2000008,0.5285
+304.71111195440983,0.5285
+312.22222311115695,0.5285
+319.7333342655668,0.5285
+327.24444542231385,0.5285
+334.7555565767237,0.6719999999999999
+342.2666677334708,0.6719999999999999
+349.77777888788063,0.6719999999999999
+357.2888900446277,0.6719999999999999
+364.8000012,0.6719999999999999
+372.31111235440983,0.6719999999999999
+379.82222351115695,0.6719999999999999
+387.3333346655668,0.6719999999999999
+394.84444582231384,0.6719999999999999
+402.3555569767237,0.6719999999999999
+409.8666681334708,0.6719999999999999
+417.3777792878806,0.6719999999999999
+424.8888904446277,0.6719999999999999
+432.4000016,0.6719999999999999
+439.9111127544098,0.6719999999999999
+447.42222391115695,0.6719999999999999
+454.9333350655668,0.6719999999999999
+462.44444622231384,0.6719999999999999
+469.9555573767237,0.6719999999999999
+477.4666685334708,0.6719999999999999
+484.9777796878806,0.6719999999999999
+492.48889084325293,0.6719999999999999
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">312.288500059,0.0
+312.288500059,1.0
+					</series>
+					<comment>Parameters: α=0.0001, ε=0.001, bucket width=7.5111, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [162, 500]
+Mean estimate of displayed sample: 312.3 ± 12.21 (99.99% CI)</comment>
+				</plot>
+				<plot title="Frequency Histogram" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="count">
+					<series title="count" type="b(7.511111)" color="0x0000ff" encoding="csv">162.0,169.0
+169.51111115440983,0.0
+177.02222231115692,0.0
+184.53333346556676,624.0
+192.04444462231385,0.0
+199.55555577672368,0.0
+207.06666693347077,0.0
+214.5777780878806,213.0
+222.0888892446277,0.0
+229.6000004,0.0
+237.11111155440983,51.0
+244.62222271115692,0.0
+252.13333386556675,0.0
+259.64444502231385,0.0
+267.1555561767237,0.0
+274.6666673334708,0.0
+282.17777848788063,0.0
+289.6888896446277,0.0
+297.2000008,0.0
+304.71111195440983,0.0
+312.22222311115695,0.0
+319.7333342655668,0.0
+327.24444542231385,287.0
+334.7555565767237,0.0
+342.2666677334708,0.0
+349.77777888788063,0.0
+357.2888900446277,0.0
+364.8000012,0.0
+372.31111235440983,0.0
+379.82222351115695,0.0
+387.3333346655668,0.0
+394.84444582231384,0.0
+402.3555569767237,0.0
+409.8666681334708,0.0
+417.3777792878806,0.0
+424.8888904446277,0.0
+432.4000016,0.0
+439.9111127544098,0.0
+447.42222391115695,0.0
+454.9333350655668,0.0
+462.44444622231384,0.0
+469.9555573767237,0.0
+477.4666685334708,0.0
+484.9777796878806,0.0
+492.48889084325293,656.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">312.288500059,0.0
+312.288500059,656.0
+					</series>
+					<comment>Parameters: α=0.0001, ε=0.001, bucket width=7.5111, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [162, 500]
+Mean estimate of displayed sample: 312.3 ± 12.21 (99.99% CI)</comment>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>E[&lt;=MAXTIME;2000] (max: tasks_finished()) under opt</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>Pr[&lt;=MAXTIME] (&lt;&gt; forall(i:int[0,AgentNum-1]) iteration[i] &gt;= MaxIteration ) under opt</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula/>
+			<comment>E[&lt;=MAXTIME;2000] (max: globalTime*((exists(i:int[0,AgentNum-1]) iteration[i] &lt; MaxIteration)))</comment>
+		</query>
+		<query>
+			<formula/>
+			<comment>Pr[&lt;=MAXTIME] (&lt;&gt; forall(i:int[0,AgentNum-1]) iteration[i] &gt;= MaxIteration )</comment>
+		</query>
+		<query>
+			<formula/>
+			<comment>//</comment>
+		</query>
+		<query>
+			<formula/>
+			<comment>saveStrategy("/home/ron/uppaal/projects/mcrl_strategy_parser/OutParser/out/complete_path.out", opt)</comment>
+		</query>
+		<query>
+			<formula/>
+			<comment>E&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) under opt</comment>
+			<option key="--diagnostic" value="0"/>
+			<option key="--learning-method" value="-1"/>
+			<option key="--good-runs" value="1000"/>
+			<option key="--total-runs" value="1000"/>
+			<option key="--runs-pr-state" value="1000"/>
+			<option key="--alpha" value="1.0E-4"/>
+			<option key="--beta" value="1.0E-4"/>
+			<option key="--epsilon" value="0.001"/>
+		</query>
+		<query>
+			<formula>A&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) under opt</formula>
+			<comment>Task Coverage</comment>
+		</query>
+		<query>
+			<formula/>
+			<comment>saveStrategy("/home/ron/uppaal/projects/mcrl_strategy_parser/OutParser/out/concise_path.out", opt)</comment>
+		</query>
+	</queries>
+</nta>

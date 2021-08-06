@@ -1,0 +1,1439 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.5//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_5.dtd'>
+<nta>
+	<declaration>const int AgentNum = 3;
+typedef int[0,AgentNum-1] AgentScale;
+const int TaskNum = 4;
+const int EventNum = 0;
+const int MilestoneNum = 4;
+const int MaxIteration = 1;
+const int REWARDRATE = 4;
+
+//NEED TO CHANGE WHEN AGENTS INCREASE
+const int RegularTaskNum[AgentNum] = {3,3,3};
+const int MaxLearnTime = 330;
+const int MaxWorkTime = MaxLearnTime - 30;
+
+int[-1,MilestoneNum] position[AgentNum] = {0,0,0};
+
+bool tf[AgentNum][TaskNum]={{true,false,false,false},{true,false,false,false},
+{true,false,false,false}};
+
+bool ts[AgentNum][TaskNum]={{true,false,false,false},{true,false,false,false},
+{true,false,false,false}};
+
+int iteration[AgentNum] = {0,0,0};
+bool idle[AgentNum] = {true,true,true};
+
+//END
+int award = 0;
+clock globalTime;
+broadcast chan someoneDone[MilestoneNum];
+const int[0,TaskNum] rules[MilestoneNum] = {0,1,2,3};
+
+int tasks_finished() 
+{
+    int a;
+    int t;
+    int finished = 0;
+    for(a : AgentScale) 
+    {
+        for(t = 1; t &lt; TaskNum; ++t)
+        {
+            if(tf[a][t]) ++finished;
+        }
+        finished += iteration[a] * (TaskNum - 1);
+    }
+    return finished;
+}
+
+
+void punish(int agentID, int currentPosition, int targetPosition)
+{
+    idle[agentID] = false;
+    award--;
+}
+
+void reward(int agentID)
+{
+    award += 2;
+}
+
+bool isNecessary(int agentID, int taskID)
+{
+    return !tf[agentID][taskID]&amp;&amp;iteration[agentID]&lt;MaxIteration;
+}
+
+bool isBusy(int taskID)
+{
+    int id = 0;
+    bool busy = false;
+
+
+    for(id = 0; id &lt; AgentNum; id++)
+    {
+        if(ts[id][taskID])
+        {
+            busy = true;
+            return busy;
+        }
+    }
+
+    return busy;
+}
+
+bool isReady(int agentID, int currentPosition, int targetPosition)
+{
+    int currentTask = rules[currentPosition];
+    int targetTask = rules[targetPosition];
+    bool currentFinished = tf[agentID][currentTask];
+    bool targetFinished = tf[agentID][targetTask];
+    bool jobDone = currentFinished || (!targetFinished);
+    bool ready = idle[agentID]&amp;&amp;iteration[agentID]&lt;MaxIteration;
+
+    //return ready&amp;&amp;(jobDone||mistakes[agentID]&lt;4);
+    return ready &amp;&amp; jobDone;
+    //return ready;
+}
+
+bool shouldWait(int agentID)
+{
+    int currentPosition, currentTask;
+    bool currentFinished, ready, wait, busy;
+
+    currentPosition = position[agentID];
+    if(currentPosition != -1)
+    {
+        currentTask = rules[currentPosition];
+        currentFinished = tf[agentID][currentTask];
+        ready = idle[agentID]&amp;&amp;iteration[agentID]&lt;MaxIteration;
+        busy = isBusy(currentTask);
+        wait = !currentFinished &amp;&amp; ready &amp;&amp; busy;
+    }
+    else
+    {
+        wait = false;
+    }
+
+    return wait;   
+}
+
+
+</declaration>
+	<template>
+		<name>Movement0</name>
+		<parameter>const AgentScale id</parameter>
+		<declaration>clock t;
+</declaration>
+		<location id="id0" x="127" y="-238">
+			<name x="117" y="-268">P0</name>
+			<committed/>
+		</location>
+		<location id="id1" x="-442" y="-102">
+			<name x="-484" y="-127">F0T1</name>
+			<label kind="invariant" x="-425" y="-110">t&lt;=25</label>
+		</location>
+		<location id="id2" x="127" y="-102">
+			<name x="76" y="-127">F0T2</name>
+			<label kind="invariant" x="144" y="-102">t&lt;=26</label>
+		</location>
+		<location id="id3" x="705" y="-102">
+			<name x="714" y="-136">F0T3</name>
+			<label kind="invariant" x="722" y="-102">t&lt;=30</label>
+		</location>
+		<location id="id4" x="-442" y="34">
+			<name x="-472" y="42">P1</name>
+			<label kind="exponentialrate" x="-452" y="68">1</label>
+		</location>
+		<location id="id5" x="-136" y="238">
+			<name x="-187" y="229">F1T2</name>
+			<label kind="invariant" x="-110" y="229">t&lt;=15</label>
+		</location>
+		<location id="id6" x="119" y="340">
+			<name x="109" y="310">F1T3</name>
+			<label kind="invariant" x="111" y="349">t&lt;=18</label>
+		</location>
+		<location id="id7" x="127" y="34">
+			<name x="117" y="4">P2</name>
+			<label kind="exponentialrate" x="117" y="68">1</label>
+		</location>
+		<location id="id8" x="-136" y="-170">
+			<name x="-146" y="-200">F2T1</name>
+			<label kind="invariant" x="-146" y="-155">t&lt;=15</label>
+		</location>
+		<location id="id9" x="408" y="-170">
+			<name x="398" y="-200">F2T3</name>
+			<label kind="invariant" x="425" y="-187">t&lt;=12</label>
+		</location>
+		<location id="id10" x="705" y="34">
+			<name x="714" y="8">P3</name>
+			<label kind="exponentialrate" x="695" y="68">1</label>
+		</location>
+		<location id="id11" x="119" y="442">
+			<name x="109" y="412">F3T1</name>
+			<label kind="invariant" x="109" y="457">t&lt;=18</label>
+		</location>
+		<location id="id12" x="408" y="238">
+			<name x="365" y="314">F3T2</name>
+			<label kind="invariant" x="425" y="229">t&lt;=12</label>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-527" y="-238">isReady(id,0,1)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="-561" y="-195">t=0,position[id]=-1,
+punish(id,0,1)</label>
+			<nail x="-442" y="-238"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id1"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-561" y="-76">t&gt;=25</label>
+			<label kind="assignment" x="-561" y="-51">t=0,position[id]=1,
+idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id2"/>
+			<label kind="guard" x="17" y="-221">isReady(id,0,2)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="17" y="-178">t=0,position[id]=-1,
+punish(id,0,2)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id2"/>
+			<target ref="id7"/>
+			<label kind="guard" x="76" y="-76">t&gt;=26</label>
+			<label kind="assignment" x="51" y="-51">t=0,position[id]=2,
+idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id3"/>
+			<label kind="guard" x="620" y="-229">isReady(id,0,3)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="620" y="-187">t=0,position[id]=-1,
+punish(id,0,3)</label>
+			<nail x="705" y="-238"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id3"/>
+			<target ref="id10"/>
+			<label kind="guard" x="680" y="-59">t&gt;=30</label>
+			<label kind="assignment" x="671" y="-42">t=0,position[id]=3,
+idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id5"/>
+			<label kind="guard" x="-323" y="144">isReady(id,1,2)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="-323" y="102">t=0,position[id]=-1,
+punish(id,1,2)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id5"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-34" y="136">t&gt;=15</label>
+			<label kind="assignment" x="-34" y="161">t=0,position[id]=2,
+idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id6"/>
+			<label kind="guard" x="-323" y="263">isReady(id,1,3)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="-323" y="314">t=0,position[id]=-1,punish(id,1,3)</label>
+			<nail x="-373" y="340"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id6"/>
+			<target ref="id10"/>
+			<label kind="guard" x="518" y="272">t&gt;=18</label>
+			<label kind="assignment" x="518" y="297">t=0,position[id]=3,
+idle[id]=true</label>
+			<nail x="620" y="340"/>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id8"/>
+			<label kind="guard" x="-178" y="-85">isReady(id,2,1)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="-178" y="-34">t=0,position[id]=-1,
+punish(id,2,1)</label>
+			<nail x="-136" y="34"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id8"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-357" y="-68">t&gt;=15</label>
+			<label kind="assignment" x="-357" y="-51">t=0,position[id]=1,
+idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id9"/>
+			<label kind="guard" x="255" y="-93">isReady(id,2,3)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="255" y="-42">t=0,position[id]=-1,
+punish(id,2,3)</label>
+			<nail x="408" y="34"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="guard" x="476" y="-68">t&gt;=12</label>
+			<label kind="assignment" x="476" y="-42">t=0,position[id]=3,
+idle[id]=true</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="guard" x="238" y="399">isReady(id,3,1)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="467" y="399">t=0,position[id]=-1,
+punish(id,3,1)</label>
+			<nail x="705" y="442"/>
+		</transition>
+		<transition controllable="false">
+			<source ref="id11"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-561" y="289">t&gt;=18</label>
+			<label kind="assignment" x="-561" y="314">t=0,position[id]=1,
+idle[id]=true</label>
+			<nail x="-442" y="442"/>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id12"/>
+			<label kind="guard" x="450" y="93">isReady(id,3,2)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="450" y="136">t=0,position[id]=-1,
+punish(id,3,2)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id12"/>
+			<target ref="id7"/>
+			<label kind="guard" x="204" y="136">t&gt;=12</label>
+			<label kind="assignment" x="204" y="161">t=0,position[id]=2,
+idle[id]=true</label>
+		</transition>
+	</template>
+	<template>
+		<name>TaskExecution0</name>
+		<parameter>const AgentScale id</parameter>
+		<declaration>clock t;
+
+void updateIteration()
+{
+	int i=0;
+	bool finish = true;
+	for(i=1;i&lt;=RegularTaskNum[id];i++)
+	{
+		finish &amp;= tf[id][i];
+	}
+	if(finish)
+	{
+		for(i=1;i&lt;=RegularTaskNum[id];i++)
+		{
+			tf[id][i]=false;
+		}
+		
+		iteration[id]+=1;
+		if(iteration[id]&gt;=MaxIteration)
+		{
+			iteration[id]=MaxIteration;
+		}
+	}
+	else
+	{
+    	finish = true;
+	}
+}
+
+</declaration>
+		<location id="id13" x="-748" y="-136">
+		</location>
+		<location id="id14" x="-748" y="136">
+			<name x="-773" y="161">Waiting</name>
+		</location>
+		<location id="id15" x="-408" y="-136">
+			<name x="-418" y="-166">T0</name>
+			<label kind="exponentialrate" x="-418" y="-102">1</label>
+		</location>
+		<location id="id16" x="-408" y="-646">
+			<name x="-418" y="-676">T1</name>
+			<label kind="invariant" x="-418" y="-631">t&lt;=15</label>
+		</location>
+		<location id="id17" x="136" y="-136">
+			<name x="126" y="-166">T2</name>
+			<label kind="invariant" x="153" y="-153">t&lt;=8</label>
+		</location>
+		<location id="id18" x="-408" y="272">
+			<name x="-418" y="242">T3</name>
+			<label kind="invariant" x="-418" y="287">t&lt;=15</label>
+		</location>
+		<init ref="id15"/>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-714" y="-178">globalTime&gt;MaxWorkTime&amp;&amp;
+iteration[id]&lt;MaxIteration</label>
+			<label kind="assignment" x="-714" y="-195">award-=100, idle[id]=false</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id14"/>
+			<target ref="id15"/>
+			<label kind="synchronisation" x="-671" y="144">someoneDone[position[id]]?</label>
+			<label kind="assignment" x="-671" y="119">t=0,idle[id]=true</label>
+			<nail x="-680" y="204"/>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id14"/>
+			<label kind="guard" x="-722" y="34">shouldWait(id)</label>
+			<label kind="assignment" x="-722" y="51">t=0,idle[id]=false</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id16"/>
+			<label kind="guard" x="-399" y="-527">((!isBusy(1))&amp;&amp;
+(position[id]==1))&amp;&amp;
+isNecessary(id,1)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="-399" y="-442">t=0,ts[id][1]=true,tf[id][1]=false,
+idle[id]=false,reward(id)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id16"/>
+			<target ref="id15"/>
+			<label kind="guard" x="-714" y="-467">t&gt;=10</label>
+			<label kind="synchronisation" x="-714" y="-399">someoneDone[position[id]]!</label>
+			<label kind="assignment" x="-714" y="-442">t=0,ts[id][1]=false,tf[id][1]=true,
+updateIteration(),idle[id]=true</label>
+			<nail x="-578" y="-408"/>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id17"/>
+			<label kind="guard" x="-255" y="-195">((tf[id][1]&amp;&amp;!isBusy(2))&amp;&amp;
+(position[id]==2))&amp;&amp;
+isNecessary(id,2)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="-255" y="-119">t=0,ts[id][2]=true,tf[id][2]=false,
+idle[id]=false,reward(id)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id17"/>
+			<target ref="id15"/>
+			<label kind="guard" x="-170" y="-348">t&gt;=8</label>
+			<label kind="synchronisation" x="-170" y="-288">someoneDone[position[id]]!</label>
+			<label kind="assignment" x="-170" y="-331">t=0,ts[id][2]=false,tf[id][2]=true,
+updateIteration(),idle[id]=true</label>
+			<nail x="-136" y="-331"/>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id18"/>
+			<label kind="guard" x="-459" y="-8">((tf[id][2]&amp;&amp;!isBusy(3))&amp;&amp;
+(position[id]==3))&amp;&amp;
+isNecessary(id,3)&amp;&amp;
+globalTime&lt;=MaxWorkTime</label>
+			<label kind="assignment" x="-459" y="76">t=0,ts[id][3]=true,tf[id][3]=false,
+idle[id]=false,reward(id)</label>
+		</transition>
+		<transition controllable="false">
+			<source ref="id18"/>
+			<target ref="id15"/>
+			<label kind="guard" x="-170" y="25">t&gt;=15</label>
+			<label kind="synchronisation" x="-170" y="42">someoneDone[position[id]]!</label>
+			<label kind="assignment" x="-170" y="59">t=0,ts[id][3]=false,tf[id][3]=true,
+updateIteration(),idle[id]=true</label>
+			<nail x="-136" y="68"/>
+		</transition>
+	</template>
+	<system>movement0 = Movement0(0);
+taskExe0 = TaskExecution0(0);
+movement1 = Movement0(1);
+taskExe1 = TaskExecution0(1);
+movement2 = Movement0(2);
+taskExe2 = TaskExecution0(2);
+
+system movement0, taskExe0, movement1, taskExe1, movement2, taskExe2;</system>
+	<queries>
+		<option key="--search-order" value="2"/>
+		<option key="--diagnostic" value="2"/>
+		<option key="--learning-method" value="-1"/>
+		<option key="--good-runs" value="1000"/>
+		<option key="--total-runs" value="1000"/>
+		<option key="--runs-pr-state" value="1000"/>
+		<option key="--alpha" value="0.001"/>
+		<option key="--beta" value="0.001"/>
+		<option key="--epsilon" value="0.01"/>
+		<query>
+			<formula>strategy opt = maxE((tasks_finished()*REWARDRATE) - globalTime)[&lt;=MaxLearnTime]{
+movement0.location, taskExe0.location, movement1.location, taskExe1.location, 
+movement2.location, taskExe2.location,
+iteration[0], iteration[1], iteration[2],
+tf[0][0], tf[0][1], tf[0][2], tf[0][3], tf[1][0], tf[1][1], tf[1][2], tf[1][3],
+tf[2][0], tf[2][1], tf[2][2], tf[2][3]}-&gt;{}:&lt;&gt; (((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) || globalTime &gt;= MaxLearnTime)</formula>
+			<comment>minE(globalTime-(tasks_finished()*REWARDRATE))
+maxE((tasks_finished()*REWARDRATE) - globalTime)
+award</comment>
+			<option key="--diagnostic" value="2"/>
+			<option key="--learning-method" value="-1"/>
+			<option key="--good-runs" value="10000"/>
+			<option key="--total-runs" value="10000"/>
+			<option key="--runs-pr-state" value="10000"/>
+			<option key="--max-iterations" value="100"/>
+			<option key="--reset-no-better" value="20"/>
+			<option key="--max-reset-learning" value="20"/>
+			<option key="--alpha" value="1.0E-4"/>
+			<option key="--beta" value="1.0E-4"/>
+			<option key="--epsilon" value="0.001"/>
+		</query>
+		<query>
+			<formula>E[&lt;=MaxLearnTime;2000] (max: globalTime*((exists(i:int[0,AgentNum-1]) iteration[i] &lt; MaxIteration))) under opt</formula>
+			<comment>A[] ((taskExe0.T1 imply movement0.P1) and (taskExe1.T1 imply movement1.P1) and (taskExe2.T1 imply movement2.P1) and 
+(taskExe0.T2 imply movement0.P2) and (taskExe1.T2 imply movement1.P2) and (taskExe2.T2 imply movement2.P2) and 
+(taskExe0.T3 imply movement0.P3) and (taskExe1.T3 imply movement1.P3) and (taskExe2.T3 imply movement2.P3)) opt
+
+E&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) under opt
+
+saveStrategy("/home/ron/uppaal/projects/q_learning/output/complete_path.out", opt)</comment>
+			<result outcome="success" type="quantity" value="119.25 ± 0.191541 (99.9% CI)" timestamp="2021-07-15 11:23:15 +0200">
+				<details>119.25 ± 0.191541 (99.9% CI)</details>
+				<plot title="Probability Density Distribution" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="probability density">
+					<series title="density" type="b(0.637128)" color="0x0000ff" encoding="csv">116.01770634010481,0.06984471036783327
+116.65483416219917,0.11693101593143164
+117.29196196220684,0.14753712294473606
+117.92908977820933,0.2526965586876332
+118.56621758710797,0.2731006505197461
+119.20334540920233,0.30135242660052536
+119.84047321768865,0.2016863791253994
+120.4776010265873,0.16401733723649814
+121.11472884868165,0.0
+121.75185665011364,0.0
+122.38898446469182,0.0
+123.02611227359047,0.0
+123.66324008959295,0.0
+124.30036790417114,0.0
+124.937495711695,0.0
+125.57462352907227,0.0
+126.21175133659612,0.002354319818898602
+126.8488791511743,0.003139091795256919
+127.48600695398109,0.003923866516368235
+128.12313477607543,0.005493408157273227
+128.7602625981698,0.005493408157273227
+129.3973903920856,7.847802385124511E-4
+130.03451821555475,0.003139091795256919
+130.6716460230786,0.0047086361809149085
+131.3087738390811,7.847802385124511E-4
+131.9459016536593,0.0
+132.58302946255793,0.0
+133.2201572785604,0.0
+133.85728508608426,0.0
+134.49441290203725,0.0
+135.13154070346923,0.0
+135.76866852556358,0.0
+136.40579634765794,0.002354319818898602
+137.04292414294855,0.0062781828783845415
+137.6800519650429,0.0
+138.31717977256676,0.0
+138.95430759466112,0.0
+139.59143538995173,0.0
+140.22856321204608,0.0
+140.86569103414044,0.0
+141.5028188369472,0.0
+142.1399466515254,0.0
+142.77707445904926,0.0
+143.41420227505174,0.0
+144.05133008395038,0.003923866516368235
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.25008377369181,0.0
+119.25008377369181,0.30135242660052536
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=0.63713, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.018, 144.688]
+Mean estimate of displayed sample: 119.25 ± 0.191541 (99.9% CI)</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="probability">
+					<series title="probability" type="b(0.637128)" color="0x0000ff" encoding="csv">116.01770634010481,0.0445
+116.65483416219917,0.07450000000000001
+117.29196196220684,0.094
+117.92908977820933,0.161
+118.56621758710797,0.17400000000000002
+119.20334540920233,0.192
+119.84047321768865,0.1285
+120.4776010265873,0.10450000000000001
+121.11472884868165,0.0
+121.75185665011364,0.0
+122.38898446469182,0.0
+123.02611227359047,0.0
+123.66324008959295,0.0
+124.30036790417114,0.0
+124.937495711695,0.0
+125.57462352907227,0.0
+126.21175133659612,0.0015
+126.8488791511743,0.002
+127.48600695398109,0.0025
+128.12313477607543,0.0035
+128.7602625981698,0.0035
+129.3973903920856,5.0E-4
+130.03451821555475,0.002
+130.6716460230786,0.003
+131.3087738390811,5.0E-4
+131.9459016536593,0.0
+132.58302946255793,0.0
+133.2201572785604,0.0
+133.85728508608426,0.0
+134.49441290203725,0.0
+135.13154070346923,0.0
+135.76866852556358,0.0
+136.40579634765794,0.0015
+137.04292414294855,0.004
+137.6800519650429,0.0
+138.31717977256676,0.0
+138.95430759466112,0.0
+139.59143538995173,0.0
+140.22856321204608,0.0
+140.86569103414044,0.0
+141.5028188369472,0.0
+142.1399466515254,0.0
+142.77707445904926,0.0
+143.41420227505174,0.0
+144.05133008395038,0.0025
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.25008377369181,0.0
+119.25008377369181,0.192
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=0.63713, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.018, 144.688]
+Mean estimate of displayed sample: 119.25 ± 0.191541 (99.9% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">116.01770634010481,0.0
+116.65483416219917,0.0445
+117.29196196220684,0.119
+117.92908977820933,0.21300000000000002
+118.56621758710797,0.374
+119.20334540920233,0.548
+119.84047321768865,0.74
+120.4776010265873,0.8685
+121.11472884868165,0.973
+121.75185665011364,0.973
+122.38898446469182,0.973
+123.02611227359047,0.973
+123.66324008959295,0.973
+124.30036790417114,0.973
+124.937495711695,0.973
+125.57462352907227,0.973
+126.21175133659612,0.973
+126.8488791511743,0.9744999999999999
+127.48600695398109,0.9764999999999999
+128.12313477607543,0.979
+128.7602625981698,0.9824999999999999
+129.3973903920856,0.986
+130.03451821555475,0.9864999999999999
+130.6716460230786,0.9884999999999999
+131.3087738390811,0.9914999999999999
+131.9459016536593,0.992
+132.58302946255793,0.992
+133.2201572785604,0.992
+133.85728508608426,0.992
+134.49441290203725,0.992
+135.13154070346923,0.992
+135.76866852556358,0.992
+136.40579634765794,0.992
+137.04292414294855,0.9934999999999999
+137.6800519650429,0.9974999999999999
+138.31717977256676,0.9974999999999999
+138.95430759466112,0.9974999999999999
+139.59143538995173,0.9974999999999999
+140.22856321204608,0.9974999999999999
+140.86569103414044,0.9974999999999999
+141.5028188369472,0.9974999999999999
+142.1399466515254,0.9974999999999999
+142.77707445904926,0.9974999999999999
+143.41420227505174,0.9974999999999999
+144.05133008395038,0.9974999999999999
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.25008377369181,0.0
+119.25008377369181,1.0
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=0.63713, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.018, 144.688]
+Mean estimate of displayed sample: 119.25 ± 0.191541 (99.9% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">116.01770634010481,0.0037932475706237024
+116.65483416219917,0.06170625114594985
+117.29196196220684,0.1445181422536429
+117.92908977820933,0.24443450369611794
+118.56621758710797,0.4102797695677876
+119.20334540920233,0.584631861966328
+119.84047321768865,0.7715678421088185
+120.4776010265873,0.8921906393722606
+121.11472884868165,0.9833978371005848
+121.75185665011364,0.9833978371005848
+122.38898446469182,0.9833978371005848
+123.02611227359047,0.9833978371005848
+123.66324008959295,0.9833978371005848
+124.30036790417114,0.9833978371005848
+124.937495711695,0.9833978371005848
+125.57462352907227,0.9833978371005848
+126.21175133659612,0.9833978371005848
+126.8488791511743,0.9845667286845236
+127.48600695398109,0.9861088335602499
+128.12313477607543,0.9880066749171093
+128.7602625981698,0.9905971676142951
+129.3973903920856,0.993088268537897
+130.03451821555475,0.9934340278923027
+130.6716460230786,0.9947862526549708
+131.3087738390811,0.9966974548931358
+131.9459016536593,0.9969983929642477
+132.58302946255793,0.9969983929642477
+133.2201572785604,0.9969983929642477
+133.85728508608426,0.9969983929642477
+134.49441290203725,0.9969983929642477
+135.13154070346923,0.9969983929642477
+135.76866852556358,0.9969983929642477
+136.40579634765794,0.9969983929642477
+137.04292414294855,0.9978614091430532
+137.6800519650429,0.9996835040264207
+138.31717977256676,0.9996835040264207
+138.95430759466112,0.9996835040264207
+139.59143538995173,0.9996835040264207
+140.22856321204608,0.9996835040264207
+140.86569103414044,0.9996835040264207
+141.5028188369472,0.9996835040264207
+142.1399466515254,0.9996835040264207
+142.77707445904926,0.9996835040264207
+143.41420227505174,0.9996835040264207
+144.05133008395038,0.9996835040264207
+					</series>
+					<series title="upper limit" type="k" color="0xdd0000" encoding="csv">116.01770634010481,0.0
+116.65483416219917,0.030803345797756853
+117.29196196220684,0.0963957280493274
+117.92908977820933,0.18375421518057908
+118.56621758710797,0.33867949972803735
+119.20334540920233,0.5110028118401058
+119.84047321768865,0.7066032700417675
+120.4776010265873,0.8419927459195916
+121.11472884868165,0.9589386724405661
+121.75185665011364,0.9589386724405661
+122.38898446469182,0.9589386724405661
+123.02611227359047,0.9589386724405661
+123.66324008959295,0.9589386724405661
+124.30036790417114,0.9589386724405661
+124.937495711695,0.9589386724405661
+125.57462352907227,0.9589386724405661
+126.21175133659612,0.9589386724405661
+126.8488791511743,0.9607557105553869
+127.48600695398109,0.9631945103039473
+128.12313477607543,0.9662720856101903
+128.7602625981698,0.9706455149171251
+129.3973903920856,0.9751153497509516
+130.03451821555475,0.9757636690899173
+130.6716460230786,0.9783867293150664
+131.3087738390811,0.982433607084146
+131.9459016536593,0.9831249241529295
+132.58302946255793,0.9831249241529295
+133.2201572785604,0.9831249241529295
+133.85728508608426,0.9831249241529295
+134.49441290203725,0.9831249241529295
+135.13154070346923,0.9831249241529295
+135.76866852556358,0.9831249241529295
+136.40579634765794,0.9831249241529295
+137.04292414294855,0.9852366569958528
+137.6800519650429,0.9913216610114728
+138.31717977256676,0.9913216610114728
+138.95430759466112,0.9913216610114728
+139.59143538995173,0.9913216610114728
+140.22856321204608,0.9913216610114728
+140.86569103414044,0.9913216610114728
+141.5028188369472,0.9913216610114728
+142.1399466515254,0.9913216610114728
+142.77707445904926,0.9913216610114728
+143.41420227505174,0.9913216610114728
+144.05133008395038,0.9913216610114728
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">116.01770634010481,0.0
+116.65483416219917,0.0445
+117.29196196220684,0.119
+117.92908977820933,0.21300000000000002
+118.56621758710797,0.374
+119.20334540920233,0.548
+119.84047321768865,0.74
+120.4776010265873,0.8685
+121.11472884868165,0.973
+121.75185665011364,0.973
+122.38898446469182,0.973
+123.02611227359047,0.973
+123.66324008959295,0.973
+124.30036790417114,0.973
+124.937495711695,0.973
+125.57462352907227,0.973
+126.21175133659612,0.973
+126.8488791511743,0.9744999999999999
+127.48600695398109,0.9764999999999999
+128.12313477607543,0.979
+128.7602625981698,0.9824999999999999
+129.3973903920856,0.986
+130.03451821555475,0.9864999999999999
+130.6716460230786,0.9884999999999999
+131.3087738390811,0.9914999999999999
+131.9459016536593,0.992
+132.58302946255793,0.992
+133.2201572785604,0.992
+133.85728508608426,0.992
+134.49441290203725,0.992
+135.13154070346923,0.992
+135.76866852556358,0.992
+136.40579634765794,0.992
+137.04292414294855,0.9934999999999999
+137.6800519650429,0.9974999999999999
+138.31717977256676,0.9974999999999999
+138.95430759466112,0.9974999999999999
+139.59143538995173,0.9974999999999999
+140.22856321204608,0.9974999999999999
+140.86569103414044,0.9974999999999999
+141.5028188369472,0.9974999999999999
+142.1399466515254,0.9974999999999999
+142.77707445904926,0.9974999999999999
+143.41420227505174,0.9974999999999999
+144.05133008395038,0.9974999999999999
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.25008377369181,0.0
+119.25008377369181,1.0
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=0.63713, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.018, 144.688]
+Mean estimate of displayed sample: 119.25 ± 0.191541 (99.9% CI)</comment>
+				</plot>
+				<plot title="Frequency Histogram" xaxis="max: globalTime * (exists (i:(const (range (int) &quot;0&quot; &quot;AgentNum - 1&quot;))) iteration[i] &lt; MaxIteration)" yaxis="count">
+					<series title="count" type="b(0.637128)" color="0x0000ff" encoding="csv">116.01770634010481,89.0
+116.65483416219917,149.0
+117.29196196220684,188.0
+117.92908977820933,322.0
+118.56621758710797,348.0
+119.20334540920233,384.0
+119.84047321768865,257.0
+120.4776010265873,209.0
+121.11472884868165,0.0
+121.75185665011364,0.0
+122.38898446469182,0.0
+123.02611227359047,0.0
+123.66324008959295,0.0
+124.30036790417114,0.0
+124.937495711695,0.0
+125.57462352907227,0.0
+126.21175133659612,3.0
+126.8488791511743,4.0
+127.48600695398109,5.0
+128.12313477607543,7.0
+128.7602625981698,7.0
+129.3973903920856,1.0
+130.03451821555475,4.0
+130.6716460230786,6.0
+131.3087738390811,1.0
+131.9459016536593,0.0
+132.58302946255793,0.0
+133.2201572785604,0.0
+133.85728508608426,0.0
+134.49441290203725,0.0
+135.13154070346923,0.0
+135.76866852556358,0.0
+136.40579634765794,3.0
+137.04292414294855,8.0
+137.6800519650429,0.0
+138.31717977256676,0.0
+138.95430759466112,0.0
+139.59143538995173,0.0
+140.22856321204608,0.0
+140.86569103414044,0.0
+141.5028188369472,0.0
+142.1399466515254,0.0
+142.77707445904926,0.0
+143.41420227505174,0.0
+144.05133008395038,5.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.25008377369181,0.0
+119.25008377369181,384.0
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=0.63713, bucket count=45
+Runs: 2000 in total, 2000 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.018, 144.688]
+Mean estimate of displayed sample: 119.25 ± 0.191541 (99.9% CI)</comment>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula/>
+			<comment>E[&lt;=MaxLearnTime;2000] (max: tasks_finished()) under opt</comment>
+		</query>
+		<query>
+			<formula>Pr[&lt;=MaxLearnTime] (&lt;&gt; forall(i:int[0,AgentNum-1]) iteration[i] &gt;= MaxIteration ) under opt</formula>
+			<comment/>
+			<result outcome="success" type="interval" value="[0.990009,1] (99.9% CI)" timestamp="2021-07-15 11:23:15 +0200">
+				<details>[0.990009,1] (99.9% CI)</details>
+				<plot title="Probability Density Distribution" xaxis="run duration in time" yaxis="probability density">
+					<series title="density" type="b(1.031316)" color="0x0000ff" encoding="csv">116.01947271083608,0.07429171943538988
+117.05078884413956,0.1665159124906389
+118.08210499201354,0.23440315421903685
+119.11342112394222,0.27795344053337995
+120.14473727181621,0.183167494776822
+121.17605340511969,0.0
+122.20736955161888,0.0
+123.23868568492236,0.0
+124.27000183142154,0.0
+125.3013179722412,0.0
+126.33263412011517,0.0
+127.36395025204386,0.006404486984944571
+128.39526639991786,0.0012809042750398338
+129.42658253322134,0.012808932223447762
+130.4578986797205,0.0038426953829105394
+131.4892148275945,0.0
+132.520530960898,0.0
+133.55184710739718,0.0
+134.58316324070066,0.0
+135.61447938857464,0.0
+136.6457955205033,0.0038426953829105394
+137.6771116683773,0.0012809042750398338
+138.70842780168078,0.0
+139.73974394817998,0.0
+140.77106008148345,0.0
+141.80237622798262,0.0
+142.8336923612861,0.0
+143.8650085091601,0.0038426953829105394
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.43467458638929,0.0
+119.43467458638929,0.27795344053337995
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=1.0313, bucket count=28
+Runs: 757 in total, 757 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.019, 144.896]
+Mean estimate of displayed sample: 119.435 ± 0.349664 (99.9% CI)</comment>
+				</plot>
+				<plot title="Probability Density Confidence Intervals" xaxis="run duration in time" yaxis="probability density">
+					<series title="upper limit" type="b(1.031316)" color="0xa0a0ff" encoding="csv">116.01947271083608,0.11342968528586547
+117.05078884413956,0.22070316006372634
+118.08210499201354,0.29604735586475234
+119.11342112394222,0.34335966412608593
+120.14473727181621,0.23939346767779265
+121.17605340511969,0.009990583013320488
+122.20736955161888,0.009990583013320488
+123.23868568492236,0.009990583013320488
+124.27000183142154,0.009990583013320488
+125.3013179722412,0.009990583013320488
+126.33263412011517,0.009990583013320488
+127.36395025204386,0.02281174409385412
+128.39526639991786,0.013130093289934811
+129.42658253322134,0.03302772061310718
+130.4578986797205,0.01827450779977045
+131.4892148275945,0.009990583013320488
+132.520530960898,0.009990583013320488
+133.55184710739718,0.009990583013320488
+134.58316324070066,0.009990583013320488
+135.61447938857464,0.009990583013320488
+136.6457955205033,0.01827450779977045
+137.6771116683773,0.013130093289934811
+138.70842780168078,0.009990583013320488
+139.73974394817998,0.009990583013320488
+140.77106008148345,0.009990583013320488
+141.80237622798262,0.009990583013320488
+142.8336923612861,0.009990583013320488
+143.8650085091601,0.01827450779977045
+					</series>
+					<series title="lower limit" type="b(1.031316)" color="0x0000ff" encoding="csv">116.01947271083608,0.04844538316794673
+117.05078884413956,0.12940771685839858
+118.08210499201354,0.19266041995801086
+119.11342112394222,0.2342647720991906
+120.14473727181621,0.1447114989093204
+121.17605340511969,0.0
+122.20736955161888,0.0
+123.23868568492236,0.0
+124.27000183142154,0.0
+125.3013179722412,0.0
+126.33263412011517,0.0
+127.36395025204386,8.374071434603555E-4
+128.39526639991786,6.606669437761591E-7
+129.42658253322134,0.003580384805974861
+130.4578986797205,1.9802267533432566E-4
+131.4892148275945,0.0
+132.520530960898,0.0
+133.55184710739718,0.0
+134.58316324070066,0.0
+135.61447938857464,0.0
+136.6457955205033,1.9802267533432566E-4
+137.6771116683773,6.606669437761591E-7
+138.70842780168078,0.0
+139.73974394817998,0.0
+140.77106008148345,0.0
+141.80237622798262,0.0
+142.8336923612861,0.0
+143.8650085091601,1.9802267533432566E-4
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.43467458638929,0.0
+119.43467458638929,0.33293345577571476
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=1.0313, bucket count=28
+Runs: 757 in total, 757 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.019, 144.896]
+Mean estimate of displayed sample: 119.435 ± 0.349664 (99.9% CI)</comment>
+				</plot>
+				<plot title="Probability Distribution" xaxis="run duration in time" yaxis="probability">
+					<series title="probability" type="b(1.031316)" color="0x0000ff" encoding="csv">116.01947271083608,0.0766182641040919
+117.05078884413956,0.17173053608522384
+118.08210499201354,0.24174374967197304
+119.11342112394222,0.28665789975366074
+120.14473727181621,0.18890357710544844
+121.17605340511969,0.0
+122.20736955161888,0.0
+123.23868568492236,0.0
+124.27000183142154,0.0
+125.3013179722412,0.0
+126.33263412011517,0.0
+127.36395025204386,0.006605036147737232
+128.39526639991786,0.0013210231592501172
+129.42658253322134,0.013210049672996434
+130.4578986797205,0.00396302612632601
+131.4892148275945,0.0
+132.520530960898,0.0
+133.55184710739718,0.0
+134.58316324070066,0.0
+135.61447938857464,0.0
+136.6457955205033,0.00396302612632601
+137.6771116683773,0.0013210231592501172
+138.70842780168078,0.0
+139.73974394817998,0.0
+140.77106008148345,0.0
+141.80237622798262,0.0
+142.8336923612861,0.0
+143.8650085091601,0.00396302612632601
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.43467458638929,0.0
+119.43467458638929,0.28665789975366074
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=1.0313, bucket count=28
+Runs: 757 in total, 757 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.019, 144.896]
+Mean estimate of displayed sample: 119.435 ± 0.349664 (99.9% CI)</comment>
+				</plot>
+				<plot title="Probability Confidence Intervals" xaxis="run duration in time" yaxis="probability">
+					<series title="upper limit" type="b(1.031316)" color="0xa0a0ff" encoding="csv">116.01947271083608,0.11342968528586547
+117.05078884413956,0.22070316006372634
+118.08210499201354,0.29604735586475234
+119.11342112394222,0.34335966412608593
+120.14473727181621,0.23939346767779265
+121.17605340511969,0.009990583013320488
+122.20736955161888,0.009990583013320488
+123.23868568492236,0.009990583013320488
+124.27000183142154,0.009990583013320488
+125.3013179722412,0.009990583013320488
+126.33263412011517,0.009990583013320488
+127.36395025204386,0.02281174409385412
+128.39526639991786,0.013130093289934811
+129.42658253322134,0.03302772061310718
+130.4578986797205,0.01827450779977045
+131.4892148275945,0.009990583013320488
+132.520530960898,0.009990583013320488
+133.55184710739718,0.009990583013320488
+134.58316324070066,0.009990583013320488
+135.61447938857464,0.009990583013320488
+136.6457955205033,0.01827450779977045
+137.6771116683773,0.013130093289934811
+138.70842780168078,0.009990583013320488
+139.73974394817998,0.009990583013320488
+140.77106008148345,0.009990583013320488
+141.80237622798262,0.009990583013320488
+142.8336923612861,0.009990583013320488
+143.8650085091601,0.01827450779977045
+					</series>
+					<series title="lower limit" type="b(1.031316)" color="0x0000ff" encoding="csv">116.01947271083608,0.04844538316794673
+117.05078884413956,0.12940771685839858
+118.08210499201354,0.19266041995801086
+119.11342112394222,0.2342647720991906
+120.14473727181621,0.1447114989093204
+121.17605340511969,0.0
+122.20736955161888,0.0
+123.23868568492236,0.0
+124.27000183142154,0.0
+125.3013179722412,0.0
+126.33263412011517,0.0
+127.36395025204386,8.374071434603555E-4
+128.39526639991786,6.606669437761591E-7
+129.42658253322134,0.003580384805974861
+130.4578986797205,1.9802267533432566E-4
+131.4892148275945,0.0
+132.520530960898,0.0
+133.55184710739718,0.0
+134.58316324070066,0.0
+135.61447938857464,0.0
+136.6457955205033,1.9802267533432566E-4
+137.6771116683773,6.606669437761591E-7
+138.70842780168078,0.0
+139.73974394817998,0.0
+140.77106008148345,0.0
+141.80237622798262,0.0
+142.8336923612861,0.0
+143.8650085091601,1.9802267533432566E-4
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.43467458638929,0.0
+119.43467458638929,0.34335966412608593
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=1.0313, bucket count=28
+Runs: 757 in total, 757 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.019, 144.896]
+Mean estimate of displayed sample: 119.435 ± 0.349664 (99.9% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Distribution" xaxis="run duration in time" yaxis="probability">
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">116.01947271083608,0.0
+117.05078884413956,0.0766182641040919
+118.08210499201354,0.24834874914602525
+119.11342112394222,0.4900924735556909
+120.14473727181621,0.7767503742718175
+121.17605340511969,0.9656539424044632
+122.20736955161888,0.9656539424044632
+123.23868568492236,0.9656539424044632
+124.27000183142154,0.9656539424044632
+125.3013179722412,0.9656539424044632
+126.33263412011517,0.9656539424044632
+127.36395025204386,0.9656539424044632
+128.39526639991786,0.9722589418785154
+129.42658253322134,0.9735799407745394
+130.4578986797205,0.9867899890532374
+131.4892148275945,0.9907529724145239
+132.520530960898,0.9907529724145239
+133.55184710739718,0.9907529724145239
+134.58316324070066,0.9907529724145239
+135.61447938857464,0.9907529724145239
+136.6457955205033,0.9907529724145239
+137.6771116683773,0.9947160019938224
+138.70842780168078,0.9960370154603552
+139.73974394817998,0.9960370154603552
+140.77106008148345,0.9960370154603552
+141.80237622798262,0.9960370154603552
+142.8336923612861,0.9960370154603552
+143.8650085091601,0.9960370154603552
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.43467458638929,0.0
+119.43467458638929,1.0
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=1.0313, bucket count=28
+Runs: 757 in total, 757 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.019, 144.896]
+Mean estimate of displayed sample: 119.435 ± 0.349664 (99.9% CI)</comment>
+				</plot>
+				<plot title="Cumulative Probability Confidence Intervals" xaxis="run duration in time" yaxis="probability">
+					<series title="upper limit" type="k" color="0x0000dd" encoding="csv">116.01947271083608,0.009990583013320488
+117.05078884413956,0.11342968528586547
+118.08210499201354,0.3030496289171534
+119.11342112394222,0.5503999838391995
+120.14473727181621,0.8242561478107123
+121.17605340511969,0.9834721221687431
+122.20736955161888,0.9834721221687431
+123.23868568492236,0.9834721221687431
+124.27000183142154,0.9834721221687431
+125.3013179722412,0.9834721221687431
+126.33263412011517,0.9834721221687431
+127.36395025204386,0.9834721221687431
+128.39526639991786,0.9879004948705221
+129.42658253322134,0.9887547320896014
+130.4578986797205,0.9964196561434898
+131.4892148275945,0.9982133210877482
+132.520530960898,0.9982133210877482
+133.55184710739718,0.9982133210877482
+134.58316324070066,0.9982133210877482
+135.61447938857464,0.9982133210877482
+136.6457955205033,0.9982133210877482
+137.6771116683773,0.9995299774411273
+138.70842780168078,0.9998020148448759
+139.73974394817998,0.9998020148448759
+140.77106008148345,0.9998020148448759
+141.80237622798262,0.9998020148448759
+142.8336923612861,0.9998020148448759
+143.8650085091601,0.9998020148448759
+					</series>
+					<series title="upper limit" type="k" color="0xdd0000" encoding="csv">116.01947271083608,0.0
+117.05078884413956,0.04844538316794673
+118.08210499201354,0.19873394575938375
+119.11342112394222,0.4299847805652815
+120.14473727181621,0.723647918704284
+121.17605340511969,0.9382378614485776
+122.20736955161888,0.9382378614485776
+123.23868568492236,0.9382378614485776
+124.27000183142154,0.9382378614485776
+125.3013179722412,0.9382378614485776
+126.33263412011517,0.9382378614485776
+127.36395025204386,0.9382378614485776
+128.39526639991786,0.9468523676033367
+129.42658253322134,0.9486054692674568
+130.4578986797205,0.9669723175797704
+131.4892148275945,0.9729610890073995
+132.520530960898,0.9729610890073995
+133.55184710739718,0.9729610890073995
+134.58316324070066,0.9729610890073995
+135.61447938857464,0.9729610890073995
+136.6457955205033,0.9729610890073995
+137.6771116683773,0.9794070663236477
+138.70842780168078,0.9817255260062301
+139.73974394817998,0.9817255260062301
+140.77106008148345,0.9817255260062301
+141.80237622798262,0.9817255260062301
+142.8336923612861,0.9817255260062301
+143.8650085091601,0.9817255260062301
+					</series>
+					<series title="cumulative" type="l" color="0x000000" encoding="csv">116.01947271083608,0.0
+117.05078884413956,0.0766182641040919
+118.08210499201354,0.24834874914602525
+119.11342112394222,0.4900924735556909
+120.14473727181621,0.7767503742718175
+121.17605340511969,0.9656539424044632
+122.20736955161888,0.9656539424044632
+123.23868568492236,0.9656539424044632
+124.27000183142154,0.9656539424044632
+125.3013179722412,0.9656539424044632
+126.33263412011517,0.9656539424044632
+127.36395025204386,0.9656539424044632
+128.39526639991786,0.9722589418785154
+129.42658253322134,0.9735799407745394
+130.4578986797205,0.9867899890532374
+131.4892148275945,0.9907529724145239
+132.520530960898,0.9907529724145239
+133.55184710739718,0.9907529724145239
+134.58316324070066,0.9907529724145239
+135.61447938857464,0.9907529724145239
+136.6457955205033,0.9907529724145239
+137.6771116683773,0.9947160019938224
+138.70842780168078,0.9960370154603552
+139.73974394817998,0.9960370154603552
+140.77106008148345,0.9960370154603552
+141.80237622798262,0.9960370154603552
+142.8336923612861,0.9960370154603552
+143.8650085091601,0.9960370154603552
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.43467458638929,0.0
+119.43467458638929,1.0
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=1.0313, bucket count=28
+Runs: 757 in total, 757 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.019, 144.896]
+Mean estimate of displayed sample: 119.435 ± 0.349664 (99.9% CI)</comment>
+				</plot>
+				<plot title="Frequency Histogram" xaxis="run duration in time" yaxis="count">
+					<series title="count" type="b(1.031316)" color="0x0000ff" encoding="csv">116.01947271083608,58.0
+117.05078884413956,130.0
+118.08210499201354,183.0
+119.11342112394222,217.0
+120.14473727181621,143.0
+121.17605340511969,0.0
+122.20736955161888,0.0
+123.23868568492236,0.0
+124.27000183142154,0.0
+125.3013179722412,0.0
+126.33263412011517,0.0
+127.36395025204386,5.0
+128.39526639991786,1.0
+129.42658253322134,10.0
+130.4578986797205,3.0
+131.4892148275945,0.0
+132.520530960898,0.0
+133.55184710739718,0.0
+134.58316324070066,0.0
+135.61447938857464,0.0
+136.6457955205033,3.0
+137.6771116683773,1.0
+138.70842780168078,0.0
+139.73974394817998,0.0
+140.77106008148345,0.0
+141.80237622798262,0.0
+142.8336923612861,0.0
+143.8650085091601,3.0
+					</series>
+					<series title="average" type="pl" color="0x00dd00" encoding="csv">119.43467458638929,0.0
+119.43467458638929,217.0
+					</series>
+					<comment>Parameters: α=0.001, ε=0.01, bucket width=1.0313, bucket count=28
+Runs: 757 in total, 757 (100%) displayed, 0 (0%) remaining
+Span of displayed sample: [116.019, 144.896]
+Mean estimate of displayed sample: 119.435 ± 0.349664 (99.9% CI)</comment>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula/>
+			<comment>E[&lt;=MAXTIME;2000] (max: globalTime*((exists(i:int[0,AgentNum-1]) iteration[i] &lt; MaxIteration)))</comment>
+		</query>
+		<query>
+			<formula/>
+			<comment>Pr[&lt;=MAXTIME] (&lt;&gt; forall(i:int[0,AgentNum-1]) iteration[i] &gt;= MaxIteration )</comment>
+		</query>
+		<query>
+			<formula/>
+			<comment>//</comment>
+		</query>
+		<query>
+			<formula>saveStrategy("/home/ron/uppaal/projects/mcrl_strategy_parser/OutParser/out/complete_path.out", opt)</formula>
+			<comment>saveStrategy("/home/ron/uppaal/projects/mcrl_strategy_parser/OutParser/out/complete_path.out", opt)</comment>
+			<result outcome="success" type="quality" timestamp="2021-07-21 11:45:21 +0200">
+				<option key="--search-order" value="2"/>
+				<option key="--statespace-consumption" value="1"/>
+				<option key="--diagnostic" value="2"/>
+				<option key="--backwards-order" value="1"/>
+				<option key="--priority-order" value="0"/>
+				<option key="--generate-strategy" value="2"/>
+				<option key="--extrapolation" value="0"/>
+				<option key="--hashtable-size" value="27"/>
+				<option key="--filter" value="0"/>
+				<option key="--learning-method" value="-1"/>
+				<option key="--good-runs" value="1000"/>
+				<option key="--total-runs" value="1000"/>
+				<option key="--runs-pr-state" value="1000"/>
+				<option key="--eval-runs" value="100"/>
+				<option key="--max-iterations" value="30"/>
+				<option key="--max-imitation" value="5"/>
+				<option key="--reset-no-better" value="10"/>
+				<option key="--max-reset-learning" value="3"/>
+				<option key="--qlearning-alpha" value="2"/>
+				<option key="--split-upper-t" value="1.75"/>
+				<option key="--split-lower-t" value="0.15"/>
+				<option key="--split-ks" value="0.25"/>
+				<option key="--split-filter-rate" value="0.02"/>
+				<option key="--split-filter-val" value="0.99"/>
+				<option key="--discount" value="0.99"/>
+				<option key="--random-search-limit" value="0.5"/>
+				<option key="--deterministic-search-limit" value="0.5"/>
+				<option key="--indifference-scale" value="0.005"/>
+				<option key="--indifference-smoothing" value="10"/>
+				<option key="--lower-delta" value="0.01"/>
+				<option key="--upper-delta" value="0.01"/>
+				<option key="--alpha" value="0.001"/>
+				<option key="--beta" value="0.001"/>
+				<option key="--epsilon" value="0.01"/>
+				<option key="--u0" value="0.9"/>
+				<option key="--u1" value="1.1"/>
+				<option key="--histogram-bar-width" value="0.0"/>
+				<option key="--histogram-bar-count" value="0"/>
+				<option key="--resolution" value="4000"/>
+				<option key="--discretization" value="0.01"/>
+				<option key="--truncation-error" value="0.01"/>
+				<option key="--truncation-time-error" value="0.01"/>
+			</result>
+		</query>
+		<query>
+			<formula>E&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) under opt</formula>
+			<comment>E&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) under opt</comment>
+			<option key="--diagnostic" value="0"/>
+			<option key="--learning-method" value="-1"/>
+			<option key="--good-runs" value="1000"/>
+			<option key="--total-runs" value="1000"/>
+			<option key="--runs-pr-state" value="1000"/>
+			<option key="--alpha" value="1.0E-4"/>
+			<option key="--beta" value="1.0E-4"/>
+			<option key="--epsilon" value="0.001"/>
+			<result outcome="success" type="quality" timestamp="2021-07-21 11:45:21 +0200">
+				<option key="--search-order" value="2"/>
+				<option key="--statespace-consumption" value="1"/>
+				<option key="--diagnostic" value="2"/>
+				<option key="--backwards-order" value="1"/>
+				<option key="--priority-order" value="0"/>
+				<option key="--generate-strategy" value="2"/>
+				<option key="--extrapolation" value="0"/>
+				<option key="--hashtable-size" value="27"/>
+				<option key="--filter" value="0"/>
+				<option key="--learning-method" value="-1"/>
+				<option key="--good-runs" value="1000"/>
+				<option key="--total-runs" value="1000"/>
+				<option key="--runs-pr-state" value="1000"/>
+				<option key="--eval-runs" value="100"/>
+				<option key="--max-iterations" value="30"/>
+				<option key="--max-imitation" value="5"/>
+				<option key="--reset-no-better" value="10"/>
+				<option key="--max-reset-learning" value="3"/>
+				<option key="--qlearning-alpha" value="2"/>
+				<option key="--split-upper-t" value="1.75"/>
+				<option key="--split-lower-t" value="0.15"/>
+				<option key="--split-ks" value="0.25"/>
+				<option key="--split-filter-rate" value="0.02"/>
+				<option key="--split-filter-val" value="0.99"/>
+				<option key="--discount" value="0.99"/>
+				<option key="--random-search-limit" value="0.5"/>
+				<option key="--deterministic-search-limit" value="0.5"/>
+				<option key="--indifference-scale" value="0.005"/>
+				<option key="--indifference-smoothing" value="10"/>
+				<option key="--lower-delta" value="0.01"/>
+				<option key="--upper-delta" value="0.01"/>
+				<option key="--alpha" value="0.001"/>
+				<option key="--beta" value="0.001"/>
+				<option key="--epsilon" value="0.01"/>
+				<option key="--u0" value="0.9"/>
+				<option key="--u1" value="1.1"/>
+				<option key="--histogram-bar-width" value="0.0"/>
+				<option key="--histogram-bar-count" value="0"/>
+				<option key="--resolution" value="4000"/>
+				<option key="--discretization" value="0.01"/>
+				<option key="--truncation-error" value="0.01"/>
+				<option key="--truncation-time-error" value="0.01"/>
+			</result>
+		</query>
+		<query>
+			<formula>A&lt;&gt; ((forall(i:int[0,AgentNum-1]) iteration[i]&gt;=MaxIteration)) under opt</formula>
+			<comment>Task Coverage</comment>
+			<result outcome="failure" type="quality" timestamp="2021-07-21 11:45:21 +0200">
+				<option key="--search-order" value="2"/>
+				<option key="--statespace-consumption" value="1"/>
+				<option key="--diagnostic" value="2"/>
+				<option key="--backwards-order" value="1"/>
+				<option key="--priority-order" value="0"/>
+				<option key="--generate-strategy" value="2"/>
+				<option key="--extrapolation" value="0"/>
+				<option key="--hashtable-size" value="27"/>
+				<option key="--filter" value="0"/>
+				<option key="--learning-method" value="-1"/>
+				<option key="--good-runs" value="1000"/>
+				<option key="--total-runs" value="1000"/>
+				<option key="--runs-pr-state" value="1000"/>
+				<option key="--eval-runs" value="100"/>
+				<option key="--max-iterations" value="30"/>
+				<option key="--max-imitation" value="5"/>
+				<option key="--reset-no-better" value="10"/>
+				<option key="--max-reset-learning" value="3"/>
+				<option key="--qlearning-alpha" value="2"/>
+				<option key="--split-upper-t" value="1.75"/>
+				<option key="--split-lower-t" value="0.15"/>
+				<option key="--split-ks" value="0.25"/>
+				<option key="--split-filter-rate" value="0.02"/>
+				<option key="--split-filter-val" value="0.99"/>
+				<option key="--discount" value="0.99"/>
+				<option key="--random-search-limit" value="0.5"/>
+				<option key="--deterministic-search-limit" value="0.5"/>
+				<option key="--indifference-scale" value="0.005"/>
+				<option key="--indifference-smoothing" value="10"/>
+				<option key="--lower-delta" value="0.01"/>
+				<option key="--upper-delta" value="0.01"/>
+				<option key="--alpha" value="0.001"/>
+				<option key="--beta" value="0.001"/>
+				<option key="--epsilon" value="0.01"/>
+				<option key="--u0" value="0.9"/>
+				<option key="--u1" value="1.1"/>
+				<option key="--histogram-bar-width" value="0.0"/>
+				<option key="--histogram-bar-count" value="0"/>
+				<option key="--resolution" value="4000"/>
+				<option key="--discretization" value="0.01"/>
+				<option key="--truncation-error" value="0.01"/>
+				<option key="--truncation-time-error" value="0.01"/>
+			</result>
+		</query>
+		<query>
+			<formula/>
+			<comment>saveStrategy("/home/ron/uppaal/projects/mcrl_strategy_parser/OutParser/out/concise_path.out", opt)</comment>
+		</query>
+	</queries>
+</nta>
